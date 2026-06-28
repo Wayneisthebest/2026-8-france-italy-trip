@@ -1,0 +1,1662 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1f3a5f">
+<title>法義旅遊助理 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.21/vue.global.prod.min.js"></script>
+<style>
+:root{
+  --teal:#1f3a5f;--teal-l:#2e5689;--teal-d:#152a45;
+  --teal-bg:#eef3f9;--teal-bd:#bcd0e6;
+  --bg:#f7f5f2;--white:#fff;--ink:#1f2937;
+  --muted:#7b8493;--border:#e5e7eb;
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --orange:#c9742a;--purple:#6d4c7d;--red:#9b2226;--blue:#3a7ca5;--sage:#6a8e7f;--gold:#c9a227;
+  --scale:1;
+}
+html{font-size:calc(16px * var(--scale));}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+html,body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;color:var(--ink);overflow-x:hidden}
+body{padding-bottom:calc(64px + var(--safe-b))}
+.hdr{position:sticky;top:0;z-index:50;background:var(--teal);padding:12px 16px 0}
+.hdr-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.hdr-title{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:700;color:#fff;letter-spacing:.03em}
+.hdr-sub{font-size:.65rem;color:rgba(255,255,255,.65);margin-top:1px}
+.hdr-btns{display:flex;gap:6px}
+.hdr-btn{background:rgba(255,255,255,.18);border:none;border-radius:9px;padding:7px 10px;color:#fff;cursor:pointer;font-size:.8rem;font-family:'DM Sans',sans-serif;transition:.15s}
+.hdr-btn:hover{background:rgba(255,255,255,.3)}
+.date-strip{display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.date-strip::-webkit-scrollbar{display:none}
+.dchip{flex-shrink:0;width:54px;padding:7px 4px;border-radius:13px;cursor:pointer;text-align:center;transition:.2s;border:none}
+.dchip.on{background:#fff}
+.dchip.off{background:rgba(255,255,255,.18)}
+.dchip .dn{font-size:.72rem;font-weight:700;line-height:1.1}
+.dchip.on .dn{color:var(--teal-d)}
+.dchip.off .dn{color:#fff}
+.dchip .dl{font-size:.56rem;margin-top:1px}
+.dchip.on .dl{color:var(--teal);font-weight:600}
+.dchip.off .dl{color:rgba(255,255,255,.7)}
+.dchip .ct{font-size:.95rem;margin-top:3px}
+.panel{display:none;animation:fadeUp .28s ease}
+.panel.on{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.bnav{position:fixed;bottom:0;left:0;right:0;z-index:200;background:#fff;border-top:1px solid var(--border);display:flex;padding:8px 0;padding-bottom:max(8px,var(--safe-b));box-shadow:0 -2px 16px rgba(0,0,0,.07)}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:none;cursor:pointer;padding:2px;font-family:'DM Sans',sans-serif}
+.ni{font-size:1.25rem;transition:.2s}
+.nl{font-size:.58rem;font-weight:600;letter-spacing:.02em}
+.nb.on .ni{transform:scale(1.15)}
+.nb.on .nl{color:var(--teal)}
+.nb:not(.on) .nl{color:var(--muted)}
+.card{background:#fff;border-radius:16px;margin:0 14px 10px;box-shadow:0 1px 6px rgba(0,0,0,.06);overflow:hidden}
+.sec-lbl{font-size:.65rem;font-weight:700;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;padding:14px 16px 6px}
+.flight-card{margin:10px 14px;background:linear-gradient(135deg,var(--teal),var(--teal-l));border-radius:18px;padding:16px 18px;color:#fff;position:relative;overflow:hidden}
+.flight-card::after{content:'';position:absolute;right:-16px;top:-16px;width:100px;height:100px;background:rgba(255,255,255,.07);border-radius:50%}
+.fl-label{font-size:.65rem;opacity:.75;letter-spacing:.06em;margin-bottom:10px}
+.fl-route{display:flex;align-items:center;gap:8px}
+.fl-ap{text-align:center}
+.fl-code{font-size:1.4rem;font-weight:700;letter-spacing:.04em;color:#fff;line-height:1}
+.fl-time{font-size:.66rem;opacity:.75;margin-top:3px}
+.fl-mid{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px}
+.fl-mid-row{display:flex;align-items:center;gap:5px;width:100%}.fl-mid-row hr{flex:1;border:none;border-top:1.5px dashed rgba(255,255,255,.4)}
+.fl-mid span{font-size:1rem}
+.day-hdr{padding:14px 16px 4px;display:flex;justify-content:space-between;align-items:flex-start}
+.day-date{font-size:1rem;font-weight:700}
+.day-title{font-size:.75rem;color:var(--muted);margin-top:2px}
+.itin-list{padding:0 14px}
+.itin-item{background:#fff;border-radius:14px;margin-bottom:8px;box-shadow:0 1px 5px rgba(0,0,0,.06);display:flex;gap:0;overflow:hidden;transition:.2s}
+.itin-left{width:72px;flex-shrink:0;padding:10px 8px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:3px;border-right:1px solid #f3f4f6}
+.itin-ampm{font-size:.56rem;color:var(--muted);font-weight:600;text-transform:uppercase}
+.itin-hhmm{font-size:.9rem;font-weight:700;color:var(--ink);line-height:1}
+.itin-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.itin-body{flex:1;padding:11px 12px}
+.itin-name{font-size:.9rem;font-weight:600;color:var(--ink)}
+.itin-namejp{font-size:.68rem;color:var(--muted);margin-top:1px}
+.itin-place{font-size:.72rem;color:var(--teal);margin-top:4px;display:flex;align-items:center;gap:3px}
+.itin-dur{font-size:.65rem;color:var(--muted);margin-top:2px}
+.itin-desc{font-size:.72rem;color:var(--muted);margin-top:4px;line-height:1.5}
+.itin-note{font-size:.7rem;color:var(--muted);margin-top:3px;display:flex;align-items:flex-start;gap:4px}
+.itin-tags{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap}
+.tag{font-size:.62rem;font-weight:600;padding:2px 8px;border-radius:8px}
+.tag-spot{background:var(--teal-bg);color:var(--teal-d);border:1px solid var(--teal-bd)}
+.tag-food{background:#fbeee7;color:#9b4a1d;border:1px solid #f0cdb8}
+.tag-hotel{background:#f3eef7;color:#6d4c7d;border:1px solid #ddc9e8}
+.tag-trans{background:#eaf2f8;color:#1d4ed8;border:1px solid #bcd0e6}
+.tag-shop{background:#fcf6e8;color:#92400e;border:1px solid #f0dca8}
+.itin-score{background:#fbeee7;border:1px solid #f0cdb8;color:#9b4a1d;border-radius:8px;padding:1px 7px;font-size:.62rem;font-weight:700}
+.itin-actions{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
+.act-btn{border:none;border-radius:8px;padding:4px 10px;font-size:.68rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:.15s;display:inline-flex;align-items:center;gap:3px}
+.act-nav{background:var(--teal-bg);color:var(--teal-d);border:1px solid var(--teal-bd)}
+.act-apple{background:#eaf2f8;color:#1d4ed8;border:1px solid #bcd0e6}
+.act-official{background:var(--teal-bg);color:var(--teal-d);border:1px solid var(--teal-bd)}
+.act-guide{background:#f3eef7;color:#6d4c7d;border:1px solid #ddc9e8}
+.act-edit{background:#f9f9f8;color:var(--muted);border:1px solid var(--border)}
+.act-del{background:#fdeeee;color:#c0392b;border:1px solid #f3c9c9}
+.add-itin-btn{display:flex;align-items:center;gap:6px;margin:2px 14px 14px;background:none;border:none;cursor:pointer;color:var(--teal);font-size:.82rem;font-weight:600;font-family:'DM Sans',sans-serif}
+#gmap-frame{width:100%;height:320px;border:0;display:block}
+.map-day-bar{display:flex;gap:6px;overflow-x:auto;padding:10px 14px;background:#fff;border-bottom:1px solid var(--border);scrollbar-width:none}
+.map-day-bar::-webkit-scrollbar{display:none}
+.mdchip{flex-shrink:0;padding:5px 12px;border-radius:14px;font-size:.72rem;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--muted);transition:.15s;white-space:nowrap}
+.mdchip.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+.gps-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border-bottom:1px solid var(--border)}
+.gps-dot{width:9px;height:9px;border-radius:50%;background:#22c55e;flex-shrink:0;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.map-spot-row{display:flex;align-items:center;gap:10px;padding:11px 14px;background:#fff;border-radius:13px;margin-bottom:8px;box-shadow:0 1px 5px rgba(0,0,0,.05)}
+.map-num{width:27px;height:27px;border-radius:50%;background:var(--teal);color:#fff;font-size:.7rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rest-card{background:#fff;border-radius:16px;margin:0 14px 10px;box-shadow:0 1px 6px rgba(0,0,0,.06);overflow:hidden}
+.rest-hdr{display:flex;align-items:flex-start;gap:10px;padding:13px 14px;cursor:pointer}
+.rest-img-placeholder{width:56px;height:56px;border-radius:10px;background:var(--teal-bg);display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0}
+.rest-info{flex:1;min-width:0}
+.rest-name{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:700;color:var(--ink)}
+.rest-namejp{font-size:.68rem;color:var(--muted);margin-top:1px}
+.rest-meta{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.tl-score{display:inline-flex;align-items:center;gap:3px;background:#fbeee7;border:1px solid #f0cdb8;color:#9b4a1d;border-radius:8px;padding:2px 8px;font-size:.68rem;font-weight:700}
+.rest-expand-arrow{font-size:.82rem;color:var(--muted);padding-top:2px;flex-shrink:0;transition:transform .2s}
+.rest-body-placeholder{width:100%;height:120px;background:linear-gradient(135deg,var(--teal-bg),#dbe7f2);display:flex;align-items:center;justify-content:center;font-size:3rem}
+.rest-body{padding:14px}
+.procon{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.pro-box{background:#eef6f0;border:1px solid #c3e0cb;border-radius:11px;padding:10px}
+.con-box{background:#fdeeee;border:1px solid #f3c9c9;border-radius:11px;padding:10px}
+.pc-title{font-size:.68rem;font-weight:700;margin-bottom:5px}
+.pc-item{font-size:.7rem;line-height:1.6;color:var(--ink)}
+.review-block{background:#faf9f7;border-left:3px solid var(--teal-bd);border-radius:0 10px 10px 0;padding:9px 12px;margin-bottom:8px;font-size:.76rem;color:var(--ink);line-height:1.6}
+.rv-author{font-size:.63rem;color:var(--muted);margin-top:3px}
+.menu-section-title{font-size:.68rem;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin:12px 0 8px}
+.menu-row{display:flex;align-items:flex-start;gap:8px;padding:9px 0;border-bottom:1px solid #f5f4f2}
+.menu-row:last-child{border-bottom:none}
+.menu-jp{font-family:'Cormorant Garamond',serif;font-size:.98rem;color:var(--ink);font-weight:600}
+.menu-zh{font-size:.72rem;color:var(--muted);margin-top:2px}
+.menu-price{font-size:.95rem;font-weight:700;color:var(--teal-d);white-space:nowrap;text-align:right}
+.menu-twd{font-size:.62rem;color:var(--muted);text-align:right;margin-top:1px}
+.order-btn{background:var(--teal);color:#fff;border:none;border-radius:8px;padding:4px 11px;font-size:.68rem;font-weight:600;cursor:pointer;margin-top:4px;display:block;width:100%;font-family:'DM Sans',sans-serif;transition:.15s}
+.order-btn.added{background:#16a34a}
+.rest-order-summary{background:var(--teal-bg);border:1px solid var(--teal-bd);border-radius:11px;padding:11px 13px;margin-top:10px}
+.rate-hero{background:linear-gradient(135deg,var(--teal),var(--teal-l));border-radius:16px;margin:10px 14px;padding:18px;color:#fff}
+.rate-big{font-size:2.6rem;font-weight:700;line-height:1;font-family:'DM Sans',sans-serif}
+.shop-item{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-bottom:1px solid #f5f4f2}
+.shop-item:last-child{border-bottom:none}
+.shop-check{width:22px;height:22px;border-radius:6px;border:2px solid var(--border);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.82rem;margin-top:1px;transition:.15s}
+.shop-check.done{background:var(--teal);border-color:var(--teal);color:#fff}
+.qty-ctrl{display:flex;align-items:center}
+.qty-ctrl button{background:#f5f4f2;border:none;width:26px;height:26px;cursor:pointer;font-size:.95rem;font-weight:700;transition:.15s;color:var(--ink)}
+.qty-ctrl button:first-child{border-radius:8px 0 0 8px}
+.qty-ctrl button:last-child{border-radius:0 8px 8px 0}
+.qty-ctrl span{background:#f5f4f2;padding:0 8px;font-size:.82rem;font-weight:700;line-height:26px;min-width:28px;text-align:center}
+.price-tag{display:inline-flex;align-items:center;background:var(--teal-bg);border:1px solid var(--teal-bd);color:var(--teal-d);border-radius:7px;padding:1px 7px;font-size:.65rem;font-weight:600}
+.inp{width:100%;background:#fff;border:1.5px solid var(--border);border-radius:11px;padding:9px 13px;font-size:.85rem;font-family:'DM Sans',sans-serif;outline:none;color:var(--ink);transition:.15s}
+.inp:focus{border-color:var(--teal)}
+.sel{background:#fff;border:1.5px solid var(--border);border-radius:11px;padding:9px 13px;font-size:.82rem;font-family:'DM Sans',sans-serif;color:var(--ink);outline:none;cursor:pointer;-webkit-appearance:none;appearance:none}
+.btn{border:none;border-radius:11px;padding:10px 18px;font-size:.85rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:.15s;display:inline-flex;align-items:center;gap:5px;justify-content:center}
+.btn-teal{background:var(--teal);color:#fff}
+.btn-teal:hover{background:var(--teal-d)}
+.btn-outline{background:#fff;border:1.5px solid var(--border);color:var(--muted)}
+.btn-full{width:100%}
+.showcard{position:fixed;inset:0;background:#fff;z-index:600;overflow-y:auto;padding:24px 20px}
+.sc-row{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid #f0f0f0;gap:10px}
+.sc-name{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:600;color:#222}
+.sc-zh{font-size:.8rem;color:#888;margin-top:2px}
+.modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:400;display:flex;align-items:flex-end;justify-content:center}
+.modal-sheet{background:#fff;border-radius:22px 22px 0 0;width:100%;max-width:600px;padding:20px 20px calc(20px + var(--safe-b));max-height:90vh;overflow-y:auto;animation:sheetUp .3s ease}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:38px;height:4px;background:#e5e7eb;border-radius:2px;margin:0 auto 16px}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:700;margin-bottom:14px}
+.tr-card{display:flex;flex-direction:column;padding:14px;border-radius:13px;text-decoration:none;color:#fff;transition:.1s}
+.tr-sub{font-size:.65rem;opacity:.85;margin-bottom:4px}
+.tr-main{font-size:1.1rem;font-weight:700}
+.tr-result{background:var(--teal-bg);border-radius:13px;padding:13px 14px;margin-top:10px}
+.spot-detail{font-size:.83rem;line-height:1.75;color:var(--ink);white-space:pre-line}
+.toast-wrap{position:fixed;bottom:76px;left:50%;transform:translateX(-50%);z-index:900;pointer-events:none}
+.toast{background:rgba(28,25,23,.88);color:#fff;padding:9px 18px;border-radius:20px;font-size:.78rem;white-space:nowrap;opacity:0;transform:translateY(8px);transition:.25s}
+.toast.on{opacity:1;transform:translateY(0)}
+.empty-state{text-align:center;padding:32px 20px;color:var(--muted);font-size:.82rem}
+.chip-row{display:flex;gap:6px;overflow-x:auto;padding:0 14px 10px;scrollbar-width:none}
+.chip-row::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;padding:5px 13px;border-radius:18px;font-size:.72rem;font-weight:500;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--muted);transition:.15s;white-space:nowrap}
+.chip.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-thumb{background:var(--teal-bd);border-radius:2px}
+.itin-thumb-placeholder{width:52px;height:52px;border-radius:9px;margin-top:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.4rem;background:var(--teal-bg)}
+.scale-panel{position:absolute;top:100%;right:14px;margin-top:6px;background:#fff;border-radius:14px;padding:12px 14px;box-shadow:0 4px 20px rgba(0,0,0,.15);z-index:300;min-width:200px;animation:fadeUp .2s ease}
+.scale-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.scale-label{font-size:.78rem;color:var(--muted);flex:1}
+.prep-section{margin-bottom:22px}
+.prep-section-title{display:flex;align-items:center;gap:8px;font-size:.8rem;font-weight:800;letter-spacing:.05em;color:var(--teal-d);text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--teal-bg)}
+.prep-card{background:#fff;border-radius:16px;border:1.5px solid var(--border);padding:14px 16px;margin-bottom:10px}
+.prep-card-title{font-size:.9rem;font-weight:700;color:var(--ink);margin-bottom:6px}
+.prep-card-body{font-size:.78rem;color:var(--muted);line-height:1.6}
+.prep-card-body b{color:var(--ink)}
+.prep-tag{display:inline-flex;align-items:center;gap:4px;background:var(--teal-bg);color:var(--teal-d);border-radius:99px;padding:2px 10px;font-size:.68rem;font-weight:700;margin:3px 2px}
+.prep-tag.warn{background:#fcf3d4;color:#856404}
+.prep-tag.red{background:#fdeaea;color:#c0392b}
+.checklist-group{margin-bottom:18px}
+.checklist-group-title{font-size:.75rem;font-weight:800;letter-spacing:.05em;color:var(--muted);text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.check-item{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid #f0ede8;cursor:pointer;user-select:none}
+.check-item:last-child{border-bottom:none}
+.check-box{width:22px;height:22px;border-radius:7px;flex-shrink:0;border:2px solid var(--border);background:#fff;display:flex;align-items:center;justify-content:center;transition:.15s;margin-top:1px}
+.check-box.done{background:var(--teal);border-color:var(--teal)}
+.check-box.done::after{content:'✓';color:#fff;font-size:.85rem;font-weight:800}
+.check-label{flex:1}
+.check-name{font-size:.84rem;font-weight:600;color:var(--ink)}
+.check-sub{font-size:.68rem;color:var(--muted);margin-top:2px;line-height:1.5}
+.prep-progress{display:flex;align-items:center;gap:10px;background:#fff;border-radius:14px;padding:12px 16px;margin-bottom:18px;box-shadow:0 1px 6px rgba(0,0,0,.06)}
+.prep-progress-emoji{font-size:1.1rem}
+.prep-progress-bar-wrap{flex:1;height:8px;background:var(--teal-bg);border-radius:99px;overflow:hidden}
+.prep-progress-bar{height:100%;background:var(--teal);border-radius:99px;transition:.3s}
+.prep-progress-txt{font-size:.75rem;font-weight:700;color:var(--teal-d);white-space:nowrap}
+/* WEATHER */
+.wx-pill{display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,#e0f2fe,#eef3f9);border:1px solid #bcd0e6;border-radius:10px;padding:4px 10px;font-size:.72rem;color:#1f3a5f;font-weight:600;cursor:pointer}
+.wx-day-chips{display:flex;gap:8px;overflow-x:auto;padding:12px 14px 8px;scrollbar-width:none}
+.wx-day-chips::-webkit-scrollbar{display:none}
+.wx-dchip{flex-shrink:0;width:76px;background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:9px 6px;text-align:center;cursor:pointer;transition:.2s}
+.wx-dchip.on{border-color:var(--teal);background:var(--teal-bg)}
+.wx-dchip .wdc-date{font-size:.58rem;color:var(--muted)}
+.wx-dchip .wdc-day{font-size:.58rem;color:var(--muted)}
+.wx-dchip .wdc-icon{font-size:1.7rem;margin:4px 0}
+.wx-dchip .wdc-temp{font-size:.7rem;font-weight:700;color:var(--ink)}
+.wx-dchip .wdc-temp span{font-size:.62rem;color:var(--muted);font-weight:400}
+.wx-dchip .wdc-rain{font-size:.6rem;color:#0ea5e9;margin-top:2px}
+.wx-dchip .wdc-desc{font-size:.56rem;color:var(--muted);margin-top:1px}
+.wx-hero-card{background:linear-gradient(135deg,var(--teal),var(--teal-l));border-radius:18px;margin:0 14px 12px;padding:18px 20px;color:#fff}
+.wx-hero-icon{font-size:4rem;line-height:1}
+.wx-hero-temp{font-size:2.6rem;font-weight:700;line-height:1;font-family:'DM Sans',sans-serif}
+.wx-hero-desc{font-size:.85rem;opacity:.85;margin-top:3px}
+.wx-stats-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:14px}
+.wx-stat{text-align:center;background:#f9f9f8;border-radius:12px;padding:12px 8px}
+.wx-stat-val{font-size:1.15rem;font-weight:700;color:var(--teal-d);font-family:'DM Sans',sans-serif}
+.wx-stat-lbl{font-size:.62rem;color:var(--muted);margin-top:3px}
+.wx-sunrow{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 14px 14px}
+.wx-sun{text-align:center;background:#f9f9f8;border-radius:11px;padding:9px;font-size:.75rem}
+.wx-sun strong{color:var(--teal-d)}
+.wx-advice{margin:0 14px 12px;padding:11px 14px;background:var(--teal-bg);border-radius:12px;border-left:3px solid var(--teal);font-size:.78rem;color:var(--teal-d);line-height:1.6}
+.packing-card{background:#fff;border-radius:16px;margin:0 14px 14px;box-shadow:0 1px 6px rgba(0,0,0,.06);padding:14px}
+.packing-item{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid #f5f5f4;font-size:.8rem;color:var(--ink);line-height:1.5}
+.packing-item:last-child{border-bottom:none}
+.dchip .ct{position:relative}
+/* CAMERA MODAL */
+.cam-modal-overlay{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);display:flex;align-items:flex-end;justify-content:center}
+.cam-modal{background:#fff;border-radius:22px 22px 0 0;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;padding-bottom:env(safe-area-inset-bottom,16px);animation:sheetUp .3s ease}
+.cam-modal-hdr{position:sticky;top:0;background:#fff;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:1px solid var(--border)}
+.cam-modal-title{font-size:1rem;font-weight:800;color:var(--ink);display:flex;align-items:center;gap:8px}
+.cam-modal-close{width:34px;height:34px;border-radius:50%;border:none;background:var(--border);color:var(--ink);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.cam-modal-body{padding:14px 16px}
+.upload-zone{display:flex;flex-direction:column;align-items:center;gap:7px;padding:20px 12px;border:2px dashed var(--border);border-radius:14px;cursor:pointer;transition:.2s;background:#fff;text-align:center}
+.upload-zone:hover{border-color:var(--teal);background:var(--teal-bg)}
+.scan-item{display:flex;align-items:flex-start;gap:9px;padding:11px 14px;border-bottom:1px solid #f5f5f4;cursor:pointer;transition:.15s}
+.scan-item.sel{background:var(--teal-bg);border-left:3px solid var(--teal)}
+.scan-jp{font-family:'Cormorant Garamond',serif;font-size:.95rem;font-weight:600;color:var(--ink)}
+.scan-zh{font-size:.73rem;color:var(--muted);margin-top:2px}
+.hotchip{display:inline-flex;background:#fff;border:1.5px solid var(--border);border-radius:18px;padding:5px 11px;font-size:.72rem;cursor:pointer;color:var(--ink);transition:.15s;margin:0 5px 6px 0;font-family:'DM Sans',sans-serif}
+.hotchip:hover{border-color:var(--teal);color:var(--teal)}
+.ai-thinking{display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--muted);padding:8px 0}
+.dots span{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--teal);animation:bounce 1.2s infinite}
+.dots span:nth-child(2){animation-delay:.2s}
+.dots span:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-6px);opacity:1}}
+.qty-big{display:flex;align-items:center;gap:10px}
+.qty-big button{width:32px;height:32px;border-radius:50%;border:2px solid var(--teal);background:none;color:var(--teal);font-size:1.1rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.qty-big span{font-size:1.1rem;font-weight:700;min-width:22px;text-align:center}
+</style>
+</head>
+<body>
+<div id="app">
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-row">
+    <div>
+      <div class="hdr-title">{{meta.title}}</div>
+      <div class="hdr-sub">{{meta.sub}}</div>
+    </div>
+    <div class="hdr-btns" style="position:relative">
+      <button class="hdr-btn" @click="showScale=!showScale" title="字級">🔤</button>
+      <div v-if="showScale" class="scale-panel">
+        <div class="scale-row"><div class="scale-label">字級大小</div></div>
+        <div style="display:flex;gap:6px">
+          <button v-for="s in scaleSteps" :key="s.v" class="scale-step"
+            @click="setScale(s.v)"
+            :style="{flex:'1',height:'42px',borderRadius:'11px',border:'1.5px solid',borderColor:currentScale===s.v?'var(--teal)':'var(--border)',background:currentScale===s.v?'var(--teal-bg)':'#f9f9f8',color:currentScale===s.v?'var(--teal-d)':'var(--ink)',cursor:'pointer',fontWeight:'600',fontFamily:'DM Sans,sans-serif',fontSize:(.75+scaleSteps.indexOf(s)*.08)+'rem'}">{{s.l}}</button>
+        </div>
+        <div style="font-size:.62rem;color:var(--muted);margin-top:8px;text-align:center">設定自動儲存</div>
+      </div>
+      <button class="hdr-btn" @click="tab='prep'" title="行前準備">📋</button>
+      <button class="hdr-btn" @click="cameraOpen=true" title="拍照翻譯菜單">📸</button>
+      <button class="hdr-btn" @click="showTr=true" title="常用會話">🌐</button>
+      <button v-if="tab==='itinerary'" class="hdr-btn" @click="openAdd">＋</button>
+    </div>
+  </div>
+  <div class="date-strip" v-if="tab==='itinerary'">
+    <div v-for="(d,i) in days" :key="d.date" class="dchip" :class="{on:dayIdx===i,off:dayIdx!==i}" @click="dayIdx=i">
+      <div class="dn">{{d.num}}</div>
+      <div class="dl">Day{{i+1}}</div>
+      <div class="ct">{{d.wxIcon||d.flag}}</div>
+    </div>
+  </div>
+</header>
+
+<!-- ITINERARY -->
+<div class="panel" :class="{on:tab==='itinerary'}">
+  <div class="day-hdr">
+    <div>
+      <div class="day-date">{{curDay.dateLabel}}</div>
+      <div class="day-title">{{curDay.title}}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
+      <div v-if="curDay.wx" class="wx-pill" @click="tab='weather';wxIdx=dayIdx" style="font-size:.78rem"><span style="font-size:1.05rem">{{curDay.wx.icon}}</span> <strong>{{curDay.wx.max}}°</strong>/{{curDay.wx.min}}° · 💧{{curDay.wx.rain}}%</div>
+      <div v-else style="font-size:.66rem;color:var(--muted)">載入天氣中…</div>
+      <div v-if="curDay.city" style="font-size:.66rem;color:var(--muted)">📍 {{curDay.city}}</div>
+    </div>
+  </div>
+
+  <!-- Flight cards -->
+  <div v-if="dayIdx===0" class="flight-card">
+    <div class="fl-label">OUTBOUND · 長榮航空 BR087</div>
+    <div class="fl-route">
+      <div class="fl-ap"><div class="fl-code">TPE</div><div class="fl-time">23:30 桃園T2</div></div>
+      <div class="fl-mid"><div class="fl-mid-row"><hr><span>✈️</span><hr></div><div style="font-size:.6rem;opacity:.75;margin-top:1px">約13h</div></div>
+      <div class="fl-ap"><div class="fl-code">CDG</div><div class="fl-time">07:55 巴黎</div></div>
+    </div>
+  </div>
+  <div v-if="dayIdx===12" class="flight-card">
+    <div class="fl-label">RETURN · 長榮航空 BR096</div>
+    <div class="fl-route">
+      <div class="fl-ap"><div class="fl-code">MXP</div><div class="fl-time">11:15 米蘭</div></div>
+      <div class="fl-mid"><div class="fl-mid-row"><hr><span>✈️</span><hr></div><div style="font-size:.6rem;opacity:.75;margin-top:1px">返台</div></div>
+      <div class="fl-ap"><div class="fl-code">TPE</div><div class="fl-time">桃園</div></div>
+    </div>
+  </div>
+
+  <!-- Train card -->
+  <div v-if="curDay.train" class="flight-card" style="background:linear-gradient(135deg,#6d4c7d,#8a6699)">
+    <div class="fl-label">🚄 {{curDay.train.label}}</div>
+    <div class="fl-route">
+      <div class="fl-ap"><div class="fl-code" style="font-size:1.05rem">{{curDay.train.from}}</div><div class="fl-time">{{curDay.train.dep}}</div></div>
+      <div class="fl-mid"><div class="fl-mid-row"><hr><span>🚆</span><hr></div><div style="font-size:.6rem;opacity:.75;margin-top:1px">{{curDay.train.dur}}</div></div>
+      <div class="fl-ap"><div class="fl-code" style="font-size:1.05rem">{{curDay.train.to}}</div><div class="fl-time">{{curDay.train.arr}}</div></div>
+    </div>
+  </div>
+
+  <div class="itin-list" style="margin-top:10px">
+    <div v-if="!curItems.length" class="empty-state"><div style="font-size:2rem;margin-bottom:8px">🗓</div><div>今日尚無行程</div></div>
+    <div v-for="item in curItems" :key="item.id" class="itin-item">
+      <div class="itin-left">
+        <div class="itin-ampm">{{ampm(item.time)}}</div>
+        <div class="itin-hhmm">{{hhmm(item.time)}}</div>
+        <div class="itin-dot" :style="{background:dotColor(item.type)}"></div>
+        <div class="itin-thumb-placeholder">{{typeThumb(item.type)}}</div>
+      </div>
+      <div class="itin-body">
+        <div class="itin-name">{{item.name}}</div>
+        <div v-if="item.nameJp" class="itin-namejp">{{item.nameJp}}</div>
+        <div v-if="item.place" class="itin-place">📍 {{item.place}}</div>
+        <div v-if="item.duration" class="itin-dur">⏱ 預計停留 {{item.duration}}</div>
+        <div v-if="item.desc" class="itin-desc">{{item.desc}}</div>
+        <div v-if="item.note" class="itin-note">📝 {{item.note}}</div>
+        <div class="itin-tags">
+          <span :class="typeTagClass(item.type)" class="tag">{{typeLabel(item.type)}}</span>
+          <span v-if="item.score" class="itin-score">⭐ {{item.score}}</span>
+          <span v-if="item.booked" class="tag" style="background:#eef6f0;color:#15803d;border:1px solid #c3e0cb">✅ 已預約</span>
+          <span v-if="item.todo" class="tag" style="background:#fdeaea;color:#c0392b;border:1px solid #f3c9c9">🔔 待訂位</span>
+        </div>
+        <div class="itin-actions">
+          <button v-if="item.gmap" @click="openNav(item.gmap)" class="act-btn act-nav">🗺️ 導航</button>
+          <button v-if="item.gmap" @click="openAppleNav(item.gmap)" class="act-btn act-apple">🍎</button>
+          <button v-if="item.official" @click="openUrl(item.official)" class="act-btn act-official">🔗 官網</button>
+          <button v-if="item.type==='spot'" @click="openSpotDetail(item)" class="act-btn act-guide">🎙 深度導覽</button>
+          <button v-if="item.type==='food'" @click="tab='restaurants'" class="act-btn" style="background:#fbeee7;color:#9b4a1d;border:1px solid #f0cdb8">🍽 查看餐廳</button>
+          <button @click="editItin(item)" class="act-btn act-edit">✏️</button>
+          <button @click="deleteItin(item.id)" class="act-btn act-del">🗑</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <button class="add-itin-btn" @click="openAdd">＋ 新增行程</button>
+</div>
+
+<!-- WEATHER -->
+<div class="panel" :class="{on:tab==='weather'}">
+  <div class="wx-day-chips">
+    <div v-for="(d,i) in days" :key="d.date" class="wx-dchip" :class="{on:wxIdx===i}" @click="wxIdx=i">
+      <div class="wdc-date">{{d.date.slice(5)}}</div>
+      <div class="wdc-day">Day{{i+1}}</div>
+      <div class="wdc-icon">{{d.wxIcon||'☀️'}}</div>
+      <div v-if="d.wx" class="wdc-temp">{{d.wx.max}}°<span>/{{d.wx.min}}°</span></div>
+      <div v-if="d.wx" class="wdc-rain" :style="{color:d.wx.rain>50?'#ef4444':d.wx.rain>25?'#f97316':'#0ea5e9'}">💧{{d.wx.rain}}%</div>
+      <div v-if="d.wx" class="wdc-desc">{{wxDesc(d.wx.icon)}}</div>
+    </div>
+  </div>
+
+  <div v-if="selWx" class="wx-hero-card">
+    <div style="font-size:.72rem;opacity:.8;margin-bottom:8px">
+      {{days[wxIdx].dateLabel}} · {{days[wxIdx].title}}
+      <span v-if="selWx.src==='fb'" style="margin-left:6px;opacity:.65;font-size:.62rem">（日期超出16天預報範圍，顯示8月歷史氣候參考）</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px">
+      <div class="wx-hero-icon">{{selWx.icon}}</div>
+      <div>
+        <div class="wx-hero-temp">{{selWx.max}}°<span style="font-size:1.2rem;opacity:.75">C</span></div>
+        <div style="font-size:1rem;opacity:.8">最低 {{selWx.min}}°C</div>
+        <div class="wx-hero-desc">{{days[wxIdx].city||'移動日'}} · {{wxDesc(selWx.icon)}}</div>
+      </div>
+    </div>
+  </div>
+
+  <div v-if="selWx" class="card" style="margin-top:0;padding:0">
+    <div class="wx-stats-grid">
+      <div class="wx-stat">
+        <div class="wx-stat-val" :style="{color:selWx.rain>50?'#ef4444':selWx.rain>25?'#f97316':'var(--teal-d)'}">{{selWx.rain}}%</div>
+        <div class="wx-stat-lbl">💧 降雨機率</div>
+      </div>
+      <div class="wx-stat">
+        <div class="wx-stat-val">{{selWx.max}}°C</div>
+        <div class="wx-stat-lbl">🌡 最高氣溫</div>
+      </div>
+      <div class="wx-stat">
+        <div class="wx-stat-val" style="color:#3b82f6">{{selWx.min}}°C</div>
+        <div class="wx-stat-lbl">🌡 最低氣溫</div>
+      </div>
+    </div>
+    <div v-if="selWx.sunrise||selWx.sunset" class="wx-sunrow">
+      <div class="wx-sun">🌅 日出 <strong>{{selWx.sunrise||'06:30'}}</strong></div>
+      <div class="wx-sun">🌇 日落 <strong>{{selWx.sunset||'20:30'}}</strong></div>
+    </div>
+  </div>
+
+  <div v-if="selWx" class="wx-advice">{{wxAdvice(selWx)}}</div>
+
+  <div class="sec-lbl">🧳 根據天氣建議的行李清單</div>
+  <div class="packing-card">
+    <div v-for="tip in packingTips" :key="tip" class="packing-item"><span>•</span><span>{{tip}}</span></div>
+  </div>
+</div>
+
+<!-- MAP -->
+<div class="panel" :class="{on:tab==='map'}">
+  <div class="map-day-bar">
+    <div v-for="(d,i) in days" :key="d.date" class="mdchip" :class="{on:mapDay===i}" @click="mapDay=i">Day{{i+1}} · {{d.num}}</div>
+  </div>
+  <div style="position:relative;background:var(--teal-bg);min-height:320px">
+    <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);font-size:.78rem;text-align:center;padding:20px;z-index:0">
+      <div style="font-size:2.2rem;margin-bottom:8px">🗺️</div>
+      <div style="font-weight:600">Google 地圖</div>
+      <div style="font-size:.68rem;margin-top:5px;line-height:1.6">在手機瀏覽器開啟可正常顯示地圖<br>若此處空白，請點下方按鈕開啟 Google 地圖</div>
+    </div>
+    <iframe id="gmap-frame" :src="gmapEmbed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen style="position:relative;z-index:1;background:transparent"></iframe>
+  </div>
+  <div style="display:flex;gap:8px;padding:10px 14px;background:#fff;border-bottom:1px solid var(--border)">
+    <button class="btn btn-teal" style="flex:1;font-size:.75rem;padding:9px" @click="openDayRoute">🗺️ Google 地圖開啟今日路線</button>
+    <button class="btn btn-outline" style="font-size:.75rem;padding:9px 12px" @click="openMyLocation">📍 我的位置</button>
+  </div>
+  <div style="padding:10px 14px 6px;font-size:.72rem;font-weight:700;color:var(--muted);letter-spacing:.05em;text-transform:uppercase">Day{{mapDay+1}} · {{days[mapDay].num}} 行程地點</div>
+  <div style="padding:0 14px 14px">
+    <div v-for="(item,i) in mapSpots" :key="item.id" class="map-spot-row" @click="showOnMap(item)">
+      <div class="map-num">{{i+1}}</div>
+      <div style="flex:1">
+        <div style="font-size:.86rem;font-weight:600">{{item.name}}</div>
+        <div v-if="item.place" style="font-size:.68rem;color:var(--muted);margin-top:2px">{{item.place}}</div>
+        <div v-if="item.time" style="font-size:.65rem;color:var(--teal);margin-top:1px">⏰ {{item.time}}</div>
+      </div>
+      <button @click.stop="showOnMap(item)" style="background:var(--teal-bg);color:var(--teal-d);border:1px solid var(--teal-bd);border-radius:10px;padding:8px 11px;font-size:.7rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;flex-shrink:0">🔎 預覽</button>
+      <button @click.stop="openNav(item.gmap||item.name)" style="background:var(--teal);color:#fff;border:none;border-radius:10px;padding:8px 11px;font-size:.7rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;flex-shrink:0">🗺️ 導航</button>
+    </div>
+    <div v-if="!mapSpots.length" class="empty-state" style="padding:20px">今日尚無地點</div>
+  </div>
+</div>
+
+<!-- RESTAURANTS -->
+<div class="panel" :class="{on:tab==='restaurants'}">
+  <div style="padding:9px 14px 6px;font-size:.7rem;color:var(--muted);background:#fff;border-bottom:1px solid var(--border);line-height:1.6">
+    🔍 親子友善餐廳 · <span style="color:var(--teal);font-weight:600">每餐兩家順路推薦</span> · <span style="color:#16a34a;font-weight:600">✅ 已預約已標記</span>
+  </div>
+  <div class="chip-row" style="padding:8px 14px 6px;background:#fff;border-bottom:1px solid var(--border)">
+    <div v-for="f in restFilters" :key="f.v" class="chip" :class="{on:restFilter===f.v}" @click="restFilter=f.v">{{f.l}}</div>
+  </div>
+  <div style="padding-top:10px">
+    <div v-for="r in filteredRests" :key="r.id" class="rest-card">
+      <div class="rest-hdr" @click="toggleRest(r.id)">
+        <div class="rest-img-placeholder">{{restIcon(r.type)}}</div>
+        <div class="rest-info">
+          <div class="rest-name">{{r.name}}</div>
+          <div class="rest-namejp">{{r.nameJp}}</div>
+          <div class="rest-meta">
+            <span class="tl-score" v-if="r.score">⭐ {{r.score}}</span>
+            <span style="background:var(--teal-bg);border:1px solid var(--teal-bd);color:var(--teal-d);border-radius:8px;padding:1px 7px;font-size:.62rem;font-weight:600">{{r.dayLabel}}</span>
+            <span style="background:#f3eef7;border:1px solid #ddc9e8;color:#6d4c7d;border-radius:8px;padding:1px 7px;font-size:.62rem;font-weight:600">{{r.type}}</span>
+            <span v-if="r.booked" style="background:#eef6f0;border:1px solid #c3e0cb;color:#15803d;border-radius:8px;padding:1px 7px;font-size:.62rem;font-weight:600">✅ 已訂</span>
+          </div>
+        </div>
+        <div class="rest-expand-arrow" :style="restOpen[r.id]?{transform:'rotate(180deg)'}:{}">▼</div>
+      </div>
+      <div v-if="restOpen[r.id]">
+        <div class="rest-body-placeholder">{{restIcon(r.type)}}</div>
+        <div class="rest-body">
+          <div style="font-size:.72rem;color:var(--muted);margin-bottom:11px">📍 {{r.location}}</div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px">
+            <button @click="openNav(r.gmap)" style="background:var(--teal);color:#fff;border:none;border-radius:10px;padding:8px 13px;font-size:.73rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">🗺️ Google Maps</button>
+            <button @click="openAppleNav(r.gmap)" style="background:#eaf2f8;border:1px solid #bcd0e6;color:#1d4ed8;border-radius:10px;padding:8px 13px;font-size:.73rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">🍎 Apple</button>
+            <a v-if="r.official" :href="r.official" target="_blank" style="background:var(--teal-bg);border:1px solid var(--teal-bd);color:var(--teal-d);border-radius:10px;padding:8px 13px;text-decoration:none;font-size:.73rem;font-weight:600;font-family:'DM Sans',sans-serif">🔗 訂位/官網</a>
+          </div>
+          <div class="procon">
+            <div class="pro-box"><div class="pc-title" style="color:#15803d">✅ 優點</div><div v-for="p in r.pros" :key="p" class="pc-item">· {{p}}</div></div>
+            <div class="con-box"><div class="pc-title" style="color:#c0392b">⚠️ 注意</div><div v-for="p in r.cons" :key="p" class="pc-item">· {{p}}</div></div>
+          </div>
+          <div v-for="rv in r.reviews" :key="rv.text" class="review-block">{{rv.text}}<div class="rv-author">— {{rv.author}}</div></div>
+          <div v-if="r.menu && r.menu.length" class="menu-section-title">📄 推薦菜色</div>
+          <div v-for="m in r.menu" :key="m.jp" class="menu-row">
+            <div style="flex:1">
+              <div class="menu-jp">{{m.jp}}</div>
+              <div class="menu-zh">{{m.zh}}<span v-if="m.note" style="margin-left:4px;color:var(--muted)">· {{m.note}}</span></div>
+              <div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap">
+                <span v-if="m.kids" style="background:#eef6f0;border:1px solid #c3e0cb;color:#15803d;border-radius:7px;padding:1px 7px;font-size:.6rem;font-weight:600">👧 小孩適合</span>
+                <span v-if="m.rec" style="background:#fcf6e8;border:1px solid #f0dca8;color:#92400e;border-radius:7px;padding:1px 7px;font-size:.6rem;font-weight:600">{{m.rec}}</span>
+              </div>
+            </div>
+            <div v-if="m.price" style="flex-shrink:0;text-align:right;min-width:76px">
+              <div class="menu-price">€{{m.price}}</div>
+              <div class="menu-twd">≈NT${{Math.round(m.price*eurTwd)}}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- INFO : trains + hotels + city card -->
+<div class="panel" :class="{on:tab==='info'}">
+  <div class="sec-lbl">🚄 跨城列車</div>
+  <div class="card">
+    <div v-for="(t,i) in trains" :key="i" style="display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-bottom:1px solid #f5f4f2">
+      <div style="color:#6d4c7d;margin-top:2px">🚆</div>
+      <div style="flex:1">
+        <div style="font-size:.86rem;font-weight:700">{{t.code}}</div>
+        <div style="font-size:.7rem;color:var(--muted);margin-top:2px">{{t.time}}</div>
+        <div style="font-size:.66rem;color:#6d4c7d;margin-top:1px">{{t.note}}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-lbl">🏨 住宿</div>
+  <div class="card">
+    <div v-for="(h,i) in hotels" :key="i" style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid #f5f4f2">
+      <div style="display:flex;align-items:center;gap:10px;flex:1">
+        <div style="color:var(--sage)">🏨</div>
+        <div>
+          <div style="font-size:.86rem;font-weight:700">{{h.name}}</div>
+          <div style="font-size:.66rem;color:var(--muted);margin-top:1px">{{h.nights}}</div>
+        </div>
+      </div>
+      <button @click="openNav(h.map)" style="background:var(--teal-bg);border:1px solid var(--teal-bd);color:var(--teal-d);border-radius:9px;padding:6px 11px;font-size:.7rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap">🗺️ 地圖</button>
+    </div>
+  </div>
+
+  <div class="sec-lbl">💳 里昂城市卡提醒</div>
+  <div class="card" style="padding:14px">
+    <div style="font-size:.82rem;font-weight:700;color:var(--teal-d);margin-bottom:6px">Lyon City Card 72小時</div>
+    <div style="font-size:.76rem;color:var(--muted);line-height:1.7">抵達 Lyon Part-Dieu 站時，於站內 <b style="color:var(--ink)">Relay H</b> 購買城市卡（3大2小），<b style="color:var(--ink)">出示 TGV 車票享額外 10% 折扣</b>。含 26 間博物館、遊船、纜車與大眾運輸。遊船需提前在 App 預約場次。</div>
+  </div>
+</div>
+
+<!-- SHOPPING -->
+<div class="panel" :class="{on:tab==='shopping'}">
+  <div class="rate-hero">
+    <div style="font-size:.68rem;opacity:.75;margin-bottom:5px">💶 歐元匯率（手動輸入台幣現金賣出）</div>
+    <div style="display:flex;align-items:baseline;gap:8px">
+      <div class="rate-big">{{eurTwd.toFixed(2)}}</div>
+      <div style="font-size:.8rem;opacity:.8">NT$ / €1</div>
+    </div>
+    <div style="font-size:.7rem;opacity:.7;margin-top:4px">€1 ≈ NT${{eurTwd.toFixed(2)}}</div>
+  </div>
+  <div class="card">
+    <div style="padding:13px">
+      <div style="font-size:.8rem;font-weight:700;margin-bottom:9px">✏️ 設定匯率（台銀現金賣出）</div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+        <span style="font-size:.8rem;color:var(--muted);white-space:nowrap">€1 =</span>
+        <input class="inp" type="number" v-model="rateInput" placeholder="35.50" step="0.01" style="flex:1;font-size:1rem">
+        <span style="font-size:.8rem;color:var(--muted)">NT$</span>
+        <button class="btn btn-teal" @click="applyRate">套用</button>
+      </div>
+      <div style="font-size:.66rem;color:var(--muted)">查詢台銀牌告：<a href="https://rate.bot.com.tw/xrt?Lang=zh-TW" target="_blank" style="color:var(--teal)">rate.bot.com.tw</a></div>
+      <div style="border-top:1px solid var(--border);margin-top:12px;padding-top:12px">
+        <div style="font-size:.78rem;font-weight:700;margin-bottom:8px">💱 快速換算</div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <button @click="convDir='e2t'" :style="convDir==='e2t'?'background:var(--teal);color:#fff':'background:#f5f5f4;color:var(--ink)'" style="border:none;border-radius:8px;padding:6px 12px;font-size:.74rem;cursor:pointer;font-family:DM Sans,sans-serif">€→NT$</button>
+          <button @click="convDir='t2e'" :style="convDir==='t2e'?'background:var(--teal);color:#fff':'background:#f5f5f4;color:var(--ink)'" style="border:none;border-radius:8px;padding:6px 12px;font-size:.74rem;cursor:pointer;font-family:DM Sans,sans-serif">NT$→€</button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input class="inp" type="number" v-model="convInput" :placeholder="convDir==='e2t'?'歐元金額':'台幣金額'" @input="doConvert" style="flex:1;font-size:1rem">
+          <span style="font-size:.8rem;color:var(--muted)">{{convDir==='e2t'?'€':'NT$'}}</span>
+        </div>
+        <div v-if="convResult" style="margin-top:9px;background:var(--teal-bg);border-radius:11px;padding:11px 13px;text-align:center">
+          <div style="font-size:1.7rem;font-weight:700;color:var(--teal-d);font-family:'DM Sans',sans-serif">{{convResult}}</div>
+          <div style="font-size:.68rem;color:var(--muted);margin-top:3px">{{convSub}}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shopping list -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px 4px">
+    <div class="sec-lbl" style="padding:0">購物清單</div>
+    <div style="font-size:.82rem;font-weight:600;color:var(--teal)">{{boughtCount}}/{{shopList.length}} 件 · NT${{totalTwd.toLocaleString()}}</div>
+  </div>
+  <div style="margin:0 14px;background:linear-gradient(135deg,rgba(201,162,39,.1),rgba(109,76,125,.06));border:1px solid rgba(201,162,39,.2);border-radius:13px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <div><div style="font-size:1.3rem;font-weight:700;color:var(--teal)">NT${{totalTwd.toLocaleString()}}</div><div style="font-size:.65rem;color:var(--muted);margin-top:2px">預估合計台幣</div></div>
+    <div style="text-align:right"><div style="font-size:1.3rem;font-weight:700;color:var(--muted)">{{boughtCount}}/{{shopList.length}}</div><div style="font-size:.65rem;color:var(--muted);margin-top:2px">已購/全部</div></div>
+  </div>
+  <div class="card">
+    <div style="padding:13px">
+      <div style="font-size:.82rem;font-weight:700;margin-bottom:9px">➕ 新增商品</div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <input class="inp" type="text" v-model="newShop.name" placeholder="商品名稱" @keydown.enter="addShop(false)" style="flex:2">
+        <input class="inp" type="number" v-model="newShop.qty" min="1" style="max-width:56px;text-align:center">
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <select class="sel" v-model="newShop.cat" style="flex:1">
+          <option value="精品">👜 精品</option>
+          <option value="食品">🍫 食品</option>
+          <option value="酒類">🍷 酒類</option>
+          <option value="香水保養">💐 香水保養</option>
+          <option value="服飾">👗 服飾</option>
+          <option value="伴手禮">🎁 伴手禮</option>
+        </select>
+        <input class="inp" type="number" v-model="newShop.budget" placeholder="預算€（選填）" style="flex:1">
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-teal" style="flex:2" @click="addShop(false)">➕ 加入</button>
+        <button class="btn btn-teal" style="flex:1.2;font-size:.76rem;background:var(--teal-d)" @click="addShop(true)">➕ 加入並查價</button>
+      </div>
+    </div>
+  </div>
+  <div class="chip-row" style="padding-top:4px">
+    <div v-for="f in shopFilters" :key="f.v" class="chip" :class="{on:shopFilter===f.v}" @click="shopFilter=f.v">{{f.l}}</div>
+  </div>
+  <div class="card" style="margin-bottom:8px">
+    <div v-if="!filteredShop.length" class="empty-state" style="padding:22px">{{shopList.length?'此篩選無商品':'清單是空的 🛍️'}}</div>
+    <div v-for="item in filteredShop" :key="item.id" class="shop-item">
+      <button class="shop-check" :class="{done:item.bought}" @click="item.bought=!item.bought;saveShop()">{{item.bought?'✓':''}}</button>
+      <div style="flex:1">
+        <div :style="item.bought?{textDecoration:'line-through',color:'var(--muted)'}:{}" style="font-size:.86rem;font-weight:500">{{catIcon(item.cat)}} {{item.name}}</div>
+        <div style="font-size:.68rem;color:var(--muted);margin-top:2px">{{item.cat}}<span v-if="item.budget"> · 預算 €{{item.budget.toLocaleString()}} <span style='color:var(--teal-d);font-weight:600'>≈NT${{Math.round(item.budget*eurTwd).toLocaleString()}}</span></span></div>
+        <div v-if="item.pd" style="background:var(--teal-bg);border-radius:9px;padding:8px 10px;margin-top:6px">
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:3px">
+            <span class="price-tag">💰 約 €{{(item.pd.price||0).toLocaleString()}}</span>
+            <span style="background:#fff7ed;border:1px solid #fed7aa;color:#c2410c;border-radius:7px;padding:1px 7px;font-size:.63rem;font-weight:600">💳 NT${{Math.round((item.pd.price||0)*eurTwd).toLocaleString()}}</span>
+          </div>
+          <div style="font-size:.68rem;color:var(--muted)">📍 {{item.pd.where}}<span v-if="item.pd.note"> · {{item.pd.note}}</span></div>
+        </div>
+        <div v-if="item.querying" class="ai-thinking" style="margin-top:5px"><span>AI查詢售價中</span><div class="dots"><span></span><span></span><span></span></div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
+        <div class="qty-ctrl">
+          <button @click="item.qty=Math.max(1,item.qty-1);saveShop()">−</button>
+          <span>{{item.qty}}</span>
+          <button @click="item.qty++;saveShop()">+</button>
+        </div>
+        <div style="display:flex;gap:4px">
+          <button v-if="!item.pd&&!item.querying" @click="queryItemPrice(item.id)" style="background:var(--teal-bg);border:1px solid var(--teal-bd);color:var(--teal-d);border-radius:8px;padding:4px 8px;font-size:.66rem;cursor:pointer;white-space:nowrap">🤖 查價</button>
+          <button v-if="item.pd" @click="queryItemPrice(item.id)" style="background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;border-radius:8px;padding:4px 8px;font-size:.66rem;cursor:pointer">🔄</button>
+          <button @click="shopList=shopList.filter(x=>x.id!==item.id);saveShop()" style="background:#fff1f2;border:1px solid #fecdd3;color:#e11d48;border-radius:8px;padding:4px 8px;font-size:.68rem;cursor:pointer">✕</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;margin:0 14px 8px">
+    <button class="btn btn-teal" style="flex:1;font-size:.78rem" @click="queryAllPrices">🤖 批次查全部售價</button>
+    <button @click="shopList=shopList.filter(x=>!x.bought);saveShop()" style="background:#fff;border:1.5px solid #fecdd3;color:#e11d48;border-radius:11px;padding:10px 13px;font-size:.78rem;cursor:pointer;font-family:'DM Sans',sans-serif">🗑 清除已購</button>
+  </div>
+  <div class="card" style="margin-top:4px">
+    <div style="padding:13px">
+      <div style="font-size:.8rem;font-weight:700;margin-bottom:9px">⭐ 法義必買（點一下加入）</div>
+      <div>
+        <span v-for="h in hotlist" :key="h[0]" class="hotchip" @click="hotAdd(h[0],h[1])">{{catIcon(h[1])}} {{h[0]}}</span>
+      </div>
+    </div>
+  </div>
+  <div style="font-size:.62rem;color:var(--muted);text-align:center;padding:6px 20px 0;line-height:1.6">💡 查價功能需設定 Gemini API Key（點右上角 📸 設定），AI 估價僅供參考</div>
+</div>
+
+<!-- PREP -->
+<div class="panel" :class="{on:tab==='prep'}" style="padding:0 16px 100px">
+  <div style="padding:14px 0 4px">
+    <div class="prep-progress">
+      <div class="prep-progress-emoji">{{prepPct>=100?'🎉':'🧳'}}</div>
+      <div class="prep-progress-bar-wrap"><div class="prep-progress-bar" :style="{width:prepPct+'%'}"></div></div>
+      <div class="prep-progress-txt">{{prepDone}}/{{prepTotal}} 完成</div>
+    </div>
+  </div>
+
+  <div class="prep-section">
+    <div class="prep-section-title">🛂 簽證 & 入境</div>
+    <div class="prep-card">
+      <div class="prep-card-title">🇹🇼 台灣護照申根免簽</div>
+      <div class="prep-card-body">法國、義大利皆屬申根區，台灣護照 180 天內可停留 90 天免簽。<br>
+        <span class="prep-tag">90天免簽</span><span class="prep-tag warn">⚠️ 護照效期需6個月以上</span></div>
+    </div>
+    <div class="prep-card">
+      <div class="prep-card-title">📄 ETIAS 旅行授權</div>
+      <div class="prep-card-body">2026 年若 ETIAS 已上路，需出發前線上申請（約€7，未滿18歲免費）。出發前查官網確認是否生效。<br>
+        <span class="prep-tag warn">出發前確認是否需要</span></div>
+    </div>
+  </div>
+
+  <div class="prep-section">
+    <div class="prep-section-title">🎟️ 必搶門票（最緊急）</div>
+    <div class="prep-card">
+      <div class="prep-card-title">🍝《最後的晚餐》達文西真跡</div>
+      <div class="prep-card-body">米蘭最難訂景點，需提前 <b>2-3 個月</b>於官網搶 8/26 09:45 時段。<br>
+        <span class="prep-tag red">🔴 極早搶</span></div>
+    </div>
+    <div class="prep-card">
+      <div class="prep-card-title">🗼 艾菲爾鐵塔登頂 + 💎 聖徒禮拜堂</div>
+      <div class="prep-card-body">鐵塔登頂票 8/18 22:00（大人€36兒童€8）、聖徒禮拜堂 8/18（成人€22孩子免費）均需提前官網購票，登頂票最先售完。<br>
+        <span class="prep-tag red">🔴 盡快訂</span></div>
+    </div>
+    <div class="prep-card">
+      <div class="prep-card-title">⛪ 巴黎聖母院（免費但需預約）</div>
+      <div class="prep-card-body">免費入場，但需於造訪前 2-3 天在官方 App 搶當日預約 QR Code，旺季沒預約排隊 2-3 小時。<br>
+        <span class="prep-tag warn">8/15-16 起搶 8/18 預約</span></div>
+    </div>
+  </div>
+
+  <div class="prep-section">
+    <div class="prep-section-title">🌡️ 8月天氣 & 衣著</div>
+    <div class="prep-card">
+      <div class="prep-card-title">☀️ 法國・義大利 8 月氣候</div>
+      <div class="prep-card-body">白天炎熱乾燥，日間 28–34°C，早晚較涼。<br>
+        <span class="prep-tag">防曬必備</span><span class="prep-tag">輕薄透氣衣物</span><span class="prep-tag warn">⚠️ 室內外溫差大，備薄外套</span></div>
+    </div>
+    <div class="prep-card">
+      <div class="prep-card-title">👶 孩子衣著（5歲 & 7歲）</div>
+      <div class="prep-card-body">透氣排汗上衣、好走涼鞋、遮陽帽、防曬乳。樂園與公園易曬傷，防曬噴霧、水壺隨身。<br>
+        <span class="prep-tag warn">⚠️ 迪士尼整天在戶外，務必防曬補水</span></div>
+    </div>
+  </div>
+
+  <div class="prep-section">
+    <div class="prep-section-title">🧭 行前叮嚀</div>
+    <div class="prep-card">
+      <div class="prep-card-title">💶 現金 & 支付</div>
+      <div class="prep-card-body">歐洲信用卡普及，但市集、小館建議備少量現金。<b>Taishin Richart</b> 海外消費回饋較高。注意觀光區扒手，財不露白。<br>
+        <span class="prep-tag">備少量歐元現金</span><span class="prep-tag red">⚠️ 慎防扒手</span></div>
+    </div>
+    <div class="prep-card">
+      <div class="prep-card-title">🚄 鐵路與行李</div>
+      <div class="prep-card-body">TGV/Italo 關門極準時，提前到月台。4 件 30 吋大行李提前上車佔行李架；TER 行李架小，放車廂連接處。<b>杜林出發站 Porta Nuova、抵達站 Porta Susa 勿搞混</b>。<br>
+        <span class="prep-tag warn">⚠️ 杜林兩個車站別搞混</span></div>
+    </div>
+  </div>
+
+  <div class="prep-section">
+    <div class="prep-section-title">✅ 出發檢查清單</div>
+    <div v-for="g in checklist" :key="g.title" class="checklist-group">
+      <div class="checklist-group-title">{{g.title}}</div>
+      <div v-for="it in g.items" :key="it.id" class="check-item" @click="toggleCheck(it.id)">
+        <div class="check-box" :class="{done:checks[it.id]}"></div>
+        <div class="check-label">
+          <div class="check-name">{{it.name}}</div>
+          <div v-if="it.sub" class="check-sub">{{it.sub}}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bnav">
+  <button class="nb" :class="{on:tab==='itinerary'}" @click="tab='itinerary'"><span class="ni">🗓️</span><span class="nl">行程</span></button>
+  <button class="nb" :class="{on:tab==='weather'}" @click="tab='weather';wxIdx=dayIdx"><span class="ni">🌤️</span><span class="nl">天氣</span></button>
+  <button class="nb" :class="{on:tab==='map'}" @click="tab='map'"><span class="ni">🗺️</span><span class="nl">地圖</span></button>
+  <button class="nb" :class="{on:tab==='restaurants'}" @click="tab='restaurants'"><span class="ni">🍽️</span><span class="nl">餐廳</span></button>
+  <button class="nb" :class="{on:tab==='info'}" @click="tab='info'"><span class="ni">ℹ️</span><span class="nl">資訊</span></button>
+  <button class="nb" :class="{on:tab==='shopping'}" @click="tab='shopping'"><span class="ni">🛍️</span><span class="nl">購物</span></button>
+</nav>
+
+<!-- SPOT DETAIL -->
+<div v-if="spotDetail" class="showcard">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+    <div class="modal-title" style="margin:0">🎙 {{spotDetail.name}}</div>
+    <button @click="spotDetail=null" style="background:#f5f4f2;border:none;border-radius:50%;width:34px;height:34px;font-size:1rem;cursor:pointer">✕</button>
+  </div>
+  <div v-if="spotDetail.nameJp" style="font-size:.8rem;color:var(--muted);margin-bottom:14px">{{spotDetail.nameJp}}</div>
+  <div class="spot-detail">{{spotDetail.guide || spotDetail.desc}}</div>
+  <button v-if="spotDetail.gmap" @click="openNav(spotDetail.gmap)" class="btn btn-teal btn-full" style="margin-top:20px">🗺️ 導航前往</button>
+</div>
+
+<!-- PHRASES MODAL -->
+<div v-if="showTr" class="modal-mask" @click.self="showTr=false">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🌐 法義常用會話</div>
+    <div class="chip-row" style="padding:0 0 12px">
+      <div v-for="l in ['法文','義文']" :key="l" class="chip" :class="{on:trLang===l}" @click="trLang=l">{{l}}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div v-for="p in (trLang==='法文'?frPhrases:itPhrases)" :key="p.m" class="tr-result" style="margin-top:0">
+        <div style="font-size:.65rem;color:var(--muted);margin-bottom:3px">{{p.z}}</div>
+        <div style="font-size:1.05rem;font-weight:700;color:var(--teal-d)">{{p.m}}</div>
+        <div style="font-size:.7rem;color:var(--muted);margin-top:2px">{{p.r}}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div v-if="showAdd" class="modal-mask" @click.self="showAdd=false">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">{{editId?'✏️ 編輯行程':'＋ 新增行程'}}</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <input class="inp" v-model="form.time" placeholder="時間 例 09:30">
+      <input class="inp" v-model="form.name" placeholder="名稱">
+      <input class="inp" v-model="form.place" placeholder="地點（選填）">
+      <input class="inp" v-model="form.desc" placeholder="描述（選填）">
+      <select class="sel" v-model="form.type">
+        <option value="spot">景點</option><option value="food">餐廳</option>
+        <option value="hotel">住宿</option><option value="transport">交通</option><option value="shop">購物</option>
+      </select>
+      <input class="inp" v-model="form.gmap" placeholder="Google Maps 查詢字（選填）">
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn btn-outline btn-full" @click="showAdd=false">取消</button>
+        <button class="btn btn-teal btn-full" @click="saveItin">儲存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CAMERA TRANSLATION MODAL -->
+<div v-if="cameraOpen" class="cam-modal-overlay" @click.self="cameraOpen=false">
+  <div class="cam-modal">
+    <div class="cam-modal-hdr">
+      <div class="cam-modal-title">📸 拍照翻譯菜單</div>
+      <button class="cam-modal-close" @click="cameraOpen=false">✕</button>
+    </div>
+    <div class="cam-modal-body">
+      <div style="font-size:.72rem;color:var(--muted);margin-bottom:12px">到了現場看不懂法文/義大利文菜單？AI 即時翻譯！</div>
+
+      <!-- API Key setup -->
+      <div v-if="!gemKey" class="card" style="margin-bottom:10px">
+        <div style="padding:14px">
+          <div style="font-size:.86rem;font-weight:700;margin-bottom:8px">🔑 設定 Gemini API Key</div>
+          <div style="font-size:.72rem;color:var(--muted);margin-bottom:10px">每天 <strong>250次</strong> 免費額度。<a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--teal)">申請免費 Key →</a></div>
+          <div style="display:flex;gap:8px">
+            <input class="inp" type="password" v-model="gemKeyInput" placeholder="AIza…" style="flex:1;font-family:monospace">
+            <button class="btn btn-teal" @click="saveGemKey">儲存</button>
+          </div>
+        </div>
+      </div>
+      <div v-if="gemKey" style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 13px;background:var(--teal-bg);border-radius:11px;border:1px solid var(--teal-bd)">
+        <span style="font-size:.8rem;color:var(--teal-d)">✅ Gemini AI 已就緒</span>
+        <button @click="gemKey='';localStorage.removeItem('gem_key')" style="background:none;border:none;color:var(--muted);font-size:.7rem;cursor:pointer;margin-left:auto">移除</button>
+      </div>
+
+      <!-- Photo upload -->
+      <div class="card" style="margin-bottom:10px">
+        <div style="padding:14px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+            <label class="upload-zone">
+              <input type="file" accept="image/*" capture="environment" style="display:none" @change="addPhotos">
+              <span style="font-size:1.8rem">📷</span>
+              <span style="font-size:.8rem;font-weight:600;color:var(--teal)">直接拍照</span>
+            </label>
+            <label class="upload-zone">
+              <input type="file" accept="image/*" multiple style="display:none" @change="addPhotos">
+              <span style="font-size:1.8rem">🖼️</span>
+              <span style="font-size:.8rem;font-weight:600;color:var(--teal)">從相簿選取</span>
+            </label>
+          </div>
+          <div v-if="photos.length>0" style="margin-bottom:10px">
+            <div style="font-size:.72rem;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between">
+              <span>已加入 <strong style="color:var(--teal)">{{photos.length}}</strong> 張</span>
+              <button @click="photos=[];scanItems=[];selScan={}" style="background:none;border:none;color:var(--red);font-size:.7rem;cursor:pointer">清除</button>
+            </div>
+            <div style="display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none">
+              <div v-for="(p,i) in photos" :key="i" style="position:relative;flex-shrink:0">
+                <img :src="p.thumb" style="width:60px;height:60px;object-fit:cover;border-radius:9px;border:2px solid var(--teal-bd)">
+                <button @click="photos.splice(i,1)" style="position:absolute;top:-5px;right:-5px;width:17px;height:17px;border-radius:50%;background:var(--red);border:none;color:#fff;font-size:.58rem;cursor:pointer">✕</button>
+              </div>
+            </div>
+          </div>
+          <button v-if="photos.length>0" class="btn btn-teal btn-full" @click="doScan">
+            <span v-if="!scanning">🤖 AI 分析菜單（{{photos.length}}張）</span>
+            <span v-else>分析第{{scanProg}}/{{photos.length}}張…</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Scan results -->
+      <div v-if="scanItems.length>0" class="card" style="margin-bottom:10px">
+        <div style="padding:10px 14px;background:var(--teal-bg);border-bottom:1px solid var(--teal-bd);font-size:.8rem;color:var(--teal-d);font-weight:600">🍽️ 菜單識別結果 · 勾選要點的菜色</div>
+        <div v-for="(item,i) in scanItems" :key="i" class="scan-item" :class="{sel:selScan[i]}" @click="selScan={...selScan,[i]:!selScan[i]}">
+          <div style="font-size:1rem;width:18px;flex-shrink:0">{{selScan[i]?'☑':'☐'}}</div>
+          <div style="flex:1">
+            <div class="scan-jp">{{item.jp}}<span v-if="item.kids_ok" style="background:#eef6f0;border:1px solid #c3e0cb;color:#15803d;border-radius:6px;padding:0 5px;font-size:.56rem;margin-left:5px">👧</span></div>
+            <div class="scan-zh">{{item.zh}}<span v-if="item.note" style="color:var(--muted)"> · {{item.note}}</span></div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:.92rem;font-weight:700;color:var(--teal-d)">{{item.price?'€'+item.price:'—'}}</div>
+            <div v-if="item.price" style="font-size:.6rem;color:var(--muted)">≈NT${{Math.round(item.price*eurTwd)}}</div>
+          </div>
+        </div>
+        <div style="padding:10px 14px"><button class="btn btn-teal btn-full" @click="openScanShowcard">📋 出示給店員</button></div>
+      </div>
+
+      <!-- Manual translate -->
+      <div class="card" style="margin-bottom:14px">
+        <div style="padding:13px">
+          <div style="font-size:.82rem;font-weight:700;margin-bottom:9px">✏️ 手動輸入法文/義大利文菜名</div>
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <input class="inp" type="text" v-model="manJp" placeholder="例：Confit de canard" style="flex:2">
+            <input class="inp" type="number" v-model="manPrice" placeholder="€（選填）" style="flex:1">
+          </div>
+          <button class="btn btn-teal btn-full" @click="doManTranslate">🔍 翻譯</button>
+          <div v-if="manResult" style="margin-top:9px;background:var(--teal-bg);border-radius:11px;padding:11px 13px">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:1rem;color:var(--teal-d);font-weight:600">{{manResult.jp}}</div>
+            <div style="font-size:.82rem;color:var(--teal);font-weight:600;margin-top:4px">{{manResult.zh}}<span v-if="manResult.note" style="color:var(--muted);font-weight:400"> · {{manResult.note}}</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SHOWCARD (出示給店員) -->
+<div v-if="showCard" class="showcard">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+    <div style="font-size:1.1rem;font-weight:800">📋 我要點這些</div>
+    <button @click="showCard=false" style="background:#f5f4f2;border:none;border-radius:50%;width:34px;height:34px;font-size:1rem;cursor:pointer">✕</button>
+  </div>
+  <div style="font-size:.74rem;color:var(--muted);margin-bottom:16px">Voici ma commande / Questo è il mio ordine（請出示給店員）</div>
+  <div v-for="(it,i) in cardItems" :key="i" class="sc-row">
+    <div style="flex:1">
+      <div class="sc-name">{{it.jp}}</div>
+      <div class="sc-zh">{{it.zh}}</div>
+    </div>
+    <div class="qty-big">
+      <button @click="it.qty=Math.max(1,it.qty-1)">−</button>
+      <span>{{it.qty}}</span>
+      <button @click="it.qty++">+</button>
+    </div>
+  </div>
+  <div style="margin-top:20px;padding:14px;background:var(--teal-bg);border-radius:13px;text-align:center">
+    <div style="font-size:.72rem;color:var(--muted)">預估總計</div>
+    <div style="font-size:1.6rem;font-weight:700;color:var(--teal-d)">€{{cardTotal}}<span style="font-size:.8rem;color:var(--muted);font-weight:500"> ≈ NT${{Math.round(cardTotal*eurTwd).toLocaleString()}}</span></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-wrap"><div class="toast" :class="{on:toastMsg}">{{toastMsg}}</div></div>
+
+</div><!-- #app -->
+<script>
+const {createApp,ref,computed,watch,onMounted,nextTick} = Vue;
+
+// ─── TRIP DAYS ───
+const TRIP_DAYS = [
+  {date:'2026-08-15',num:'8/15',dateLabel:'8月15日（週六）',title:'出發日 · 桃園 → 巴黎',city:'',flag:'✈️'},
+  {date:'2026-08-16',num:'8/16',dateLabel:'8月16日（週日）',title:'抵達 · 迪士尼新園',city:'Disneyland Paris',flag:'🏰',
+    train:{label:'TGV 12512 · CDG→迪士尼',from:'CDG',dep:'09:57',to:'Chessy',arr:'10:09',dur:'12分'}},
+  {date:'2026-08-17',num:'8/17',dateLabel:'8月17日（週一）',title:'迪士尼EMT · 巴黎 · 鐵塔點燈',city:'Paris',flag:'🗼',
+    train:{label:'RER A · 迪士尼→巴黎',from:'Chessy',dep:'16:05',to:'Auber',arr:'16:48',dur:'43分'}},
+  {date:'2026-08-18',num:'8/18',dateLabel:'8月18日（週二）',title:'巴黎文化日 · 鐵塔登頂',city:'Paris',flag:'⛪'},
+  {date:'2026-08-19',num:'8/19',dateLabel:'8月19日（週三）',title:'巴黎 → 里昂',city:'Lyon',flag:'🚄',
+    train:{label:'TGV 6611 · 巴黎→里昂',from:'Paris',dep:'11:00',to:'Lyon',arr:'12:56',dur:'1h56'}},
+  {date:'2026-08-20',num:'8/20',dateLabel:'8月20日（週四）',title:'老城 · 富維耶 · 匯流博物館',city:'Lyon',flag:'🏛️'},
+  {date:'2026-08-21',num:'8/21',dateLabel:'8月21日（週五）',title:'市集 · 遊船 · 壁畫 · 金頭公園',city:'Lyon',flag:'🎨'},
+  {date:'2026-08-22',num:'8/22',dateLabel:'8月22日（週六）',title:'里昂 → 香貝里',city:'Chambéry',flag:'🚆',
+    train:{label:'TER · 里昂→香貝里',from:'Lyon',dep:'14:50',to:'Chambéry',arr:'16:16',dur:'1h26'}},
+  {date:'2026-08-23',num:'8/23',dateLabel:'8月23日（週日）',title:'香貝里 → 杜林',city:'Torino',flag:'🏔️',
+    train:{label:'TGV 9247 · 香貝里→杜林',from:'Chambéry',dep:'12:44',to:'Torino',arr:'15:23',dur:'2h39'}},
+  {date:'2026-08-24',num:'8/24',dateLabel:'8月24日（週一）',title:'杜林博物館 · 皇家花園',city:'Torino',flag:'🦕'},
+  {date:'2026-08-25',num:'8/25',dateLabel:'8月25日（週二）',title:'杜林 → 米蘭布雷拉',city:'Milano',flag:'🚄',
+    train:{label:'Italo · 杜林→米蘭',from:'P.Nuova',dep:'11:10',to:'Milano',arr:'12:10',dur:'1h'}},
+  {date:'2026-08-26',num:'8/26',dateLabel:'8月26日（週三）',title:'最後的晚餐 · 大教堂',city:'Milano',flag:'⛪'},
+  {date:'2026-08-27',num:'8/27',dateLabel:'8月27日（週四）',title:'返台',city:'',flag:'✈️'},
+];
+
+const DEFAULT_ITIN = {
+  0:[
+    {id:1,time:'20:00',name:'抵達桃園機場 T2',place:'桃園國際機場 第二航廈',duration:'',desc:'提早3小時，托運4件大行李',note:'帶兩個孩子通關需充裕時間',type:'transport',gmap:'桃園國際機場第二航廈'},
+    {id:2,time:'23:30',name:'長榮 BR087 起飛',place:'',duration:'',desc:'桃園 ➝ 巴黎 CDG，飛行約13小時',note:'',type:'transport',gmap:''},
+  ],
+  1:[
+    {id:10,time:'07:55',name:'抵達 CDG T1',place:'巴黎戴高樂機場 第一航廈',duration:'',desc:'家庭通道通關，提4件大行李',note:'CDGVAL接駁至T2',type:'transport',gmap:'Paris Charles de Gaulle Airport Terminal 1'},
+    {id:11,time:'09:57',name:'TGV 12512 ➝ Chessy',place:'CDG T2 TGV站',duration:'12分',desc:'1st Class Coach 11，12分鐘直達迪士尼',note:'已訂票',type:'transport',gmap:'Marne-la-Vallee Chessy station'},
+    {id:12,time:'10:15',name:'Disneyland Hôtel 寄存行李',place:'Disneyland Hotel Paris',duration:'',desc:'15:00正式入住，先輕裝入園',note:'退房11:00',type:'hotel',gmap:'Disneyland Hotel Paris',official:'https://www.disneylandparis.com'},
+    {id:13,time:'10:30',name:'Frozen Ever After 冰雪奇緣',nameJp:'World of Frozen',place:'Disney Adventure World',duration:'',desc:'新園最熱門，第一個衝，剛開園排約20-30分',note:'✅兩人均可',type:'spot',gmap:'Disney Adventure World Paris',guide:'2026年新開幕的冰雪奇緣園區，創紀錄人潮。Frozen Ever After 是園區招牌設施，乘船穿越艾倫戴爾王國，重現《冰雪奇緣》經典場景與歌曲。中午前排隊可達60-120分鐘，務必趁剛開園人潮未滿時第一個搭乘。'},
+    {id:14,time:'11:10',name:'Ratatouille 鼠來寶',place:'Disney Adventure World',duration:'',desc:'新園第二熱門，4D追逐設施',note:'Chez Rémy 旁邊',type:'spot',gmap:'Ratatouille ride Disneyland Paris'},
+    {id:15,time:'11:45',name:'午餐：Bistrot Chez Rémy',place:'Disney Adventure World',duration:'1.5小時',desc:'全迪士尼評價最高，鼠來寶主題沉浸式餐廳',note:'點餐前告知生日慶祝(€25蛋糕)',type:'food',gmap:'Bistrot Chez Remy Disneyland Paris',score:'已訂 11:45',booked:true},
+    {id:16,time:'13:15',name:'Spider-Man W.E.B.',place:'Disney Adventure World',duration:'',desc:'射擊互動，家庭友善',note:'餐後熱身',type:'spot',gmap:'Spider-Man WEB Adventure Disneyland Paris'},
+    {id:17,time:'13:45',name:'Crush\u0027s Coaster',place:'Disney Adventure World',duration:'',desc:'海龜主題雲霄飛車',note:'✅兩人均可(107cm)',type:'spot',gmap:'Crush Coaster Disneyland Paris'},
+    {id:18,time:'14:20',name:'Avengers Flight Force ⇄',place:'Disney Adventure World',duration:'',desc:'高速雲霄飛車',note:'Rider Switch · 需120cm，5歲不能搭',type:'spot',gmap:'Avengers Assemble Flight Force Disneyland Paris'},
+    {id:19,time:'15:00',name:'Tower of Terror ⇄',place:'Disney Adventure World',duration:'',desc:'自由落體',note:'Rider Switch · 極刺激可跳過',type:'spot',gmap:'Tower of Terror Disneyland Paris'},
+    {id:20,time:'15:40',name:'Together: A Pixar Musical',place:'Disney Adventure World',duration:'30分',desc:'新園室內音樂劇，有冷氣坐著休息',note:'場次15:40',type:'spot',gmap:'Disney Adventure World Paris'},
+    {id:21,time:'16:00',name:'下午茶：Deluxe Lounge',place:'Disneyland Hôtel',duration:'',desc:'飯店專屬貴賓廳，份量大等同輕晚餐',note:'已含 · 16:00-18:00',type:'food',gmap:'Disneyland Hotel Paris',booked:true},
+    {id:22,time:'16:45',name:'進房補眠 2.5 小時',place:'Disneyland Hôtel',duration:'',desc:'時差調整關鍵',note:'設兩個鬧鐘，不可省略',type:'hotel',gmap:''},
+    {id:23,time:'19:10',name:'A Million Splashes 大遊行',place:'Disneyland Park',duration:'',desc:'2026現役日間大遊行，彩虹花車',note:'場次19:10',type:'spot',gmap:'Disneyland Park Paris'},
+    {id:24,time:'20:00',name:'晚餐：園區快餐',place:'',duration:'',desc:'輕食解決',note:'',type:'food',gmap:''},
+    {id:25,time:'22:40',name:'Disney Tales of Magic 煙火',place:'Disneyland Park',duration:'',desc:'飯店陽台觀賞，看完走2分鐘回房',note:'飯店獨家優勢',type:'spot',gmap:''},
+  ],
+  2:[
+    {id:30,time:'07:00',name:'早餐：Deluxe Lounge',place:'Disneyland Hôtel',duration:'',desc:'07:00開門就吃，吃飽撐到午餐',note:'已含 · 07:00-11:00',type:'food',gmap:'',booked:true},
+    {id:31,time:'08:30',name:'EMT⭐ Peter Pan\u0027s Flight',place:'Disneyland Park',duration:'',desc:'EMT第一衝，白天排60-90分現在幾乎免排',note:'✅無限制',type:'spot',gmap:'Peter Pan Flight Disneyland Paris',guide:'巴黎迪士尼最會排隊的設施之一，白天動輒排60-90分鐘。住飯店享 Extra Magic Time（EMT），08:30 一般遊客入場前就能搭，幾乎免排。這是住園區飯店最大的優勢，務必第一個衝。'},
+    {id:32,time:'08:50',name:'EMT⭐ Big Thunder Mountain',place:'Disneyland Park',duration:'',desc:'公認全球最佳版本，有水下隧道',note:'✅兩人達102cm',type:'spot',gmap:'Big Thunder Mountain Disneyland Paris'},
+    {id:33,time:'09:10',name:'EMT⭐ Hyperspace Mountain ⇄',place:'Disneyland Park',duration:'',desc:'最刺激室內雲霄飛車',note:'Rider Switch · 7歲125cm達標',type:'spot',gmap:'Hyperspace Mountain Disneyland Paris'},
+    {id:34,time:'09:40',name:'Buzz Lightyear',place:'Disneyland Park',duration:'',desc:'家族射擊對戰',note:'✅無限制',type:'spot',gmap:'Buzz Lightyear Laser Blast Disneyland Paris'},
+    {id:35,time:'10:10',name:'Autopia 賽車',place:'Disneyland Park',duration:'',desc:'孩子可自己開車',note:'✅無限制',type:'spot',gmap:'Autopia Disneyland Paris'},
+    {id:36,time:'10:40',name:'Mickey\u0027s PhilharMagic',place:'Disneyland Park',duration:'',desc:'室內4D動畫，有冷氣坐著',note:'場次多',type:'spot',gmap:'Disneyland Park Paris'},
+    {id:37,time:'11:30',name:'午餐：Captain Jack\u0027s',place:'Adventureland',duration:'1.5小時',desc:'坐在加勒比海盜設施內用餐，克里奧爾料理',note:'吃完13:00趕13:30獅子王',type:'food',gmap:'Captain Jacks Disneyland Paris',score:'已訂 11:30',booked:true},
+    {id:38,time:'13:30',name:'Lion King: Rhythms 劇場',place:'Frontierland Theatre',duration:'30分',desc:'大型室內劇場秀，13:30場',note:'建議買保障座位',type:'spot',gmap:'Frontierland Theatre Disneyland Paris'},
+    {id:39,time:'14:15',name:'午餐：Bistrot Chez Rémy → 取行李',place:'Adventureland',duration:'',desc:'獅子王看完後午餐，再取行李',note:'',type:'food',gmap:''},
+    {id:40,time:'15:45',name:'行李房取4件大行李',place:'Disneyland Hôtel',duration:'',desc:'準備離場',note:'',type:'transport',gmap:''},
+    {id:41,time:'16:05',name:'RER A ➝ Auber',place:'Marne-la-Vallée Chessy',duration:'43分',desc:'每人€2.55，轉地鐵8號線',note:'⚠️注意班次調整警告',type:'transport',gmap:'Auber RER station Paris'},
+    {id:42,time:'17:08',name:'抵達 2 Rue Duvivier',place:'2 Rue Duvivier, 75007 Paris',duration:'',desc:'放行李、洗澡換衣',note:'第7區鐵塔步行圈',type:'hotel',gmap:'2 Rue Duvivier 75007 Paris'},
+    {id:43,time:'18:30',name:'晚餐：Chez Pippo',place:'31 Av. de la Bourdonnais',duration:'',desc:'義式家庭餐廳，披薩手工麵孩子愛',note:'步行6分 · 備選 Bici Trattoria',type:'food',gmap:'Chez Pippo Paris',score:'⭐4.6'},
+    {id:44,time:'20:30',name:'戰神廣場草坪佔位',place:'Champ de Mars',duration:'',desc:'鐵塔正對面，帶野餐墊',note:'',type:'spot',gmap:'Champ de Mars Paris'},
+    {id:45,time:'22:00',name:'鐵塔整點閃爍點燈秀',place:'Champ de Mars',duration:'',desc:'草坪欣賞，持續5分鐘',note:'孩子第一次看保證驚呼',type:'spot',gmap:'Eiffel Tower Paris'},
+  ],
+  3:[
+    {id:50,time:'08:00',name:'早餐：Rue Cler 市場街',place:'Rue Cler, 75007',duration:'',desc:'可頌、歐蕾咖啡，巴黎最美食物街',note:'首選 Pâtisserie de la Tour Eiffel(對街)',type:'food',gmap:'Rue Cler Paris',score:'⭐4.7'},
+    {id:51,time:'09:15',name:'巴黎聖母院 Notre-Dame',place:'Île de la Cité',duration:'1小時',desc:'2026修復後重新開放，玫瑰窗、管風琴、新祭壇',note:'免費 · 需當天搶預約QR',type:'spot',gmap:'Notre-Dame de Paris',todo:true,official:'https://www.notredamedeparis.fr',guide:'歷經2019年大火，巴黎聖母院於2024年底重新開放。修復後內部更加明亮潔淨，著名的玫瑰花窗、大管風琴與全新祭壇令人讚嘆。免費入場，但旺季需在官方App搶當日預約QR Code，否則排隊2-3小時。'},
+    {id:52,time:'10:30',name:'Saint-Louis 島冰淇淋',place:'Île Saint-Louis',duration:'',desc:'Berthillon週二公休，找島上其他冰淇淋店',note:'',type:'food',gmap:'Ile Saint-Louis Paris'},
+    {id:53,time:'11:00',name:'聖徒禮拜堂 Sainte-Chapelle',place:'Île de la Cité',duration:'1小時',desc:'彩繪玻璃窗震撼人心，上午光線最美',note:'成人€22孩子免費 · 需訂票',type:'spot',gmap:'Sainte-Chapelle Paris',todo:true,official:'https://www.sainte-chapelle.fr',guide:'13世紀哥德式建築傑作，由路易九世興建用以存放聖物。上層禮拜堂15公尺高的彩繪玻璃窗環繞四周，1113幅聖經場景在陽光穿透下如萬花筒般絢爛，是巴黎最震撼的室內空間之一。'},
+    {id:54,time:'12:15',name:'午餐：Saint-Michel 一帶',place:'Saint-Michel',duration:'',desc:'廣場咖啡館或島上小館',note:'',type:'food',gmap:'Place Saint-Michel Paris'},
+    {id:55,time:'13:30',name:'盧森堡公園',place:'Jardin du Luxembourg',duration:'2.5小時',desc:'孩子玩沙池、租小帆船、看木偶戲',note:'大樹蔭，長輩坐椅休息',type:'spot',gmap:'Jardin du Luxembourg',guide:'巴黎左岸最受喜愛的公園，園內八角形水池可租傳統小帆船，孩子用木棍推船遊玩是百年傳統。另有木偶劇場、沙池、旋轉木馬。綠椅遍布大樹蔭下，最適合帶長輩與孩子悠閒消磨午後。'},
+    {id:56,time:'16:00',name:'Bateaux Parisiens 白天遊船',place:'Port de la Bourdonnais',duration:'1小時',desc:'清楚看聖母院、羅浮宮、奧賽博物館',note:'大人€18兒童€9 · 待訂',type:'spot',gmap:'Port de la Bourdonnais Paris',todo:true},
+    {id:57,time:'17:15',name:'傷兵院外觀 Les Invalides',place:'Les Invalides',duration:'',desc:'金色大圓頂拍照，拿破崙長眠地',note:'外觀免費，步行10分',type:'spot',gmap:'Les Invalides Paris'},
+    {id:58,time:'19:30',name:'晚餐：Bici Trattoria',place:'Rue Saint-Dominique',duration:'',desc:'義大利麵與披薩，鐵塔景觀',note:'步行3分 · 備選 Chez Pippo',type:'food',gmap:'Bici Trattoria Paris',score:'⭐4.5'},
+    {id:59,time:'22:00',name:'艾菲爾鐵塔登頂',place:'Eiffel Tower',duration:'',desc:'電梯直達頂層276公尺，巴黎夜景360度',note:'大人€36兒童€8 · 票最先售完',type:'spot',gmap:'Eiffel Tower Paris',todo:true,official:'https://www.toureiffel.paris',guide:'夏季鐵塔開放至午夜，最後入場23:30。登頂276公尺可360度俯瞰巴黎夜景，22:00與23:00整點的全塔閃爍燈光秀從塔上往外看城市，視角獨特。頂層設香檳吧，可點一杯紀念。登頂票旺季最先售完，務必提前訂。'},
+  ],
+  4:[
+    {id:70,time:'09:00',name:'巴黎公寓退房',place:'2 Rue Duvivier',duration:'',desc:'前往 Gare de Lyon',note:'',type:'transport',gmap:'Paris Gare de Lyon'},
+    {id:71,time:'11:00',name:'TGV 6611 出發',place:'Paris Gare de Lyon',duration:'1h56',desc:'Première 頭等艙',note:'待購票',type:'transport',gmap:'Paris Gare de Lyon'},
+    {id:72,time:'12:56',name:'抵達 Lyon Part-Dieu',place:'Lyon Part-Dieu',duration:'',desc:'站內 Relay H 買里昂城市卡',note:'出示TGV票享10%折',type:'transport',gmap:'Lyon Part-Dieu station'},
+    {id:73,time:'13:00',name:'午餐：Les Halles Paul Bocuse',place:'102 Cours Lafayette',duration:'1.5小時',desc:'2026全球第三佳市場，現開生蠔、Praline玫瑰塔',note:'里昂美食入門 · 備選 DS Café',type:'food',gmap:'Les Halles Paul Bocuse Lyon',score:'⭐4.5'},
+    {id:74,time:'15:00',name:'入住 Pullman Lyon',place:'Lyon Part-Dieu 旁',duration:'',desc:'下車步行3分鐘',note:'',type:'hotel',gmap:'Pullman Lyon Part-Dieu'},
+    {id:75,time:'16:15',name:'沃土廣場 Place des Terreaux',place:'Place des Terreaux',duration:'',desc:'市政廳、巴特迪噴泉、美術館外觀',note:'',type:'spot',gmap:'Place des Terreaux Lyon',guide:'里昂市中心最具代表性的廣場，巴洛克市政廳與精緻的巴特迪噴泉（由打造紐約自由女神的雕塑家設計）相映成趣。地面69座噴泉燈光夜間點亮，廣場旁就是里昂美術館。'},
+    {id:76,time:'17:00',name:'索恩河畔 → Bellecour 廣場',place:'Place Bellecour',duration:'',desc:'傍晚散步，里昂最大廣場',note:'',type:'spot',gmap:'Place Bellecour Lyon'},
+    {id:77,time:'19:30',name:'晚餐：Brasserie Le Sud - Bocuse',place:'11 Place Antonin Poncet',duration:'',desc:'Bocuse旗下地中海小酒館，親子友善',note:'Bellecour旁 · 待訂',type:'food',gmap:'Brasserie Le Sud Bocuse Lyon',score:'待訂 19:30',todo:true,official:'https://www.maisons-bocuse.com'},
+  ],
+  5:[
+    {id:90,time:'09:15',name:'里昂主教座堂',place:'Vieux Lyon',duration:'',desc:'羅馬式與哥德式混搭，14世紀天文鐘',note:'老城必看',type:'spot',gmap:'Cathedrale Saint-Jean Lyon'},
+    {id:91,time:'10:00',name:'Traboules 隱密通道',place:'Vieux Lyon',duration:'',desc:'穿梭文藝復興建築間的陰涼古道',note:'找「P」標誌公開入口',type:'spot',gmap:'Traboules Vieux Lyon',guide:'里昂老城獨有的「穿廊」，是穿越建築與中庭的秘密通道，過去絲綢工人用來運送布料避雨。共40多條公開通道，找門口標有「P」符號的入口即可免費進入，穿梭其間彷彿走入中世紀。保持安靜，這些仍是住宅。'},
+    {id:92,time:'10:30',name:'La Maison de Guignol 木偶劇',place:'Vieux Lyon',duration:'30分',desc:'里昂發源的傳統手套木偶戲',note:'10:30場，可提前訂票',type:'spot',gmap:'La Maison de Guignol Lyon',official:'https://www.lamaisondeguignol.fr'},
+    {id:93,time:'12:00',name:'午餐：L\u0027Auberge des Canuts',place:'Vieux Lyon',duration:'1小時',desc:'正統里昂Bouchon，出菜快兒童友善',note:'Traboules旁 · 備選 Fiston',type:'food',gmap:'Auberge des Canuts Lyon',score:'⭐4.5'},
+    {id:94,time:'13:45',name:'富維耶聖母院',place:'Fourvière',duration:'',desc:'纜車上山，里昂制高點，金色馬賽克內部',note:'長輩免爬階梯',type:'spot',gmap:'Basilique Notre-Dame de Fourviere Lyon',guide:'矗立於富維耶山頂的19世紀新拜占庭式聖殿，俯瞰整個里昂。內部金色馬賽克與彩繪極盡華麗，被暱稱為「倒置的大象」。搭地下纜車上山，長輩孩子全程不必爬階梯，山頂平台是眺望里昂紅瓦屋頂與阿爾卑斯山的最佳地點。'},
+    {id:95,time:'14:30',name:'富維耶古羅馬劇場',place:'Fourvière',duration:'',desc:'2000年前露天劇場，俯瞰里昂',note:'緊鄰聖母院，免費',type:'spot',gmap:'Theatre Gallo-Romain Fourviere'},
+    {id:96,time:'15:45',name:'匯流博物館',place:'Musée des Confluences',duration:'2小時',desc:'恐龍、猛獁象、埃及木乃伊，孩子最愛',note:'T1電車直達 · 鋼鐵玻璃建築',type:'spot',gmap:'Musee des Confluences Lyon',official:'https://www.museedesconfluences.fr',guide:'坐落於隆河與索恩河交匯處的未來感建築，外型如水晶雲朵。館藏橫跨自然史與人類文明：完整恐龍骨架、猛獁象、埃及木乃伊、世界各地文物。互動展示豐富，是孩子大開眼界的好去處，室內冷氣舒適。'},
+    {id:97,time:'19:30',name:'晚餐：Le Café des Fédérations',place:'10 Rue Major Martin',duration:'',desc:'最經典傳統Bouchon，€34套餐8道菜',note:'備選 Bouchon Bât-d\u0027Argent',type:'food',gmap:'Le Cafe des Federations Lyon',score:'⭐4.5'},
+  ],
+  6:[
+    {id:110,time:'08:30',name:'聖安托萬市集',place:'Quai Saint-Antoine',duration:'',desc:'索恩河畔120+攤販，採購野餐食材',note:'週五06:00-13:30',type:'shop',gmap:'Marche Saint-Antoine Lyon',guide:'里昂最大的河畔露天市集，沿索恩河岸綿延，120多個攤位販售法式烤雞、各式起司、現烤麵包、鮮花蔬果。對岸是老城與富維耶山景，是體驗里昂日常生活的最佳地點。採購食材到河畔野餐最道地。'},
+    {id:111,time:'11:00',name:'Bateaux Lyonnais 遊船',place:'Quai des Célestins',duration:'1小時',desc:'沿索恩河至匯流區，英法雙語導覽',note:'大人€15兒童€9 · 城市卡含',type:'spot',gmap:'Bateaux Lyonnais Lyon'},
+    {id:112,time:'12:15',name:'午餐：河畔野餐',place:'索恩河畔',duration:'',desc:'市集採購的烤雞、起司、麵包就地野餐',note:'備選 Notre Maison⭐4.7',type:'food',gmap:''},
+    {id:113,time:'13:45',name:'Mur des Canuts 絲綢壁畫',place:'Croix-Rousse',duration:'',desc:'全法最大壁畫1200㎡，以假亂真的街景',note:'拍照超好玩',type:'spot',gmap:'Mur des Canuts Lyon',guide:'位於絲綢工人區 Croix-Rousse 的巨型3D壁畫，面積達1200平方公尺，是全法國最大的彩繪牆。畫中重現里昂街景與居民日常，透視效果以假亂真，遊客最愛站在畫前拍出融入街景的趣味照片。多年來壁畫會隨居民「成長」更新。'},
+    {id:114,time:'15:00',name:'金頭公園大放電',place:'Parc de la Tête d\u0027Or',duration:'2.5小時',desc:'免費野生動物園、租船、復古小火車',note:'孩子遊樂場 · 長輩樹蔭休息',type:'spot',gmap:'Parc de la Tete d\u0027Or Lyon',guide:'里昂最大的城市公園，佔地117公頃。免費動物園有長頸鹿、斑馬、紅鶴；大湖可租腳踏船遊湖；還有復古旋轉木馬、小火車與兒童遊樂場。綠地遼闊樹蔭充足，是孩子盡情放電、長輩悠閒休息的完美午後去處。'},
+    {id:115,time:'20:00',name:'晚餐：Bouchon Bât-d\u0027Argent',place:'23 Rue du Bât d\u0027Argent',duration:'',desc:'里昂最後一餐，10小時慢燉豬，Praline玫瑰塔',note:'備選 Notre Maison',type:'food',gmap:'Bouchon Bat d\u0027Argent Lyon',score:'⭐4.6'},
+  ],
+  7:[
+    {id:130,time:'09:00',name:'自由活動 / 最後購物',place:'Part-Dieu',duration:'',desc:'Part-Dieu商場、Bellecour廣場最後巡禮',note:'',type:'shop',gmap:'La Part-Dieu shopping centre Lyon'},
+    {id:131,time:'11:00',name:'Pullman 退房，寄存行李',place:'Pullman Lyon',duration:'',desc:'',note:'',type:'hotel',gmap:'Pullman Lyon Part-Dieu'},
+    {id:132,time:'12:00',name:'午餐：Les Halles Paul Bocuse',place:'102 Cours Lafayette',duration:'',desc:'買Praline塔帶走，趕車前快速',note:'車站步行5分',type:'food',gmap:'Les Halles Paul Bocuse Lyon'},
+    {id:133,time:'14:50',name:'TER ➝ Chambéry',place:'Lyon Part-Dieu',duration:'1h26',desc:'自由座，行李放車廂連接處',note:'待購票',type:'transport',gmap:'Lyon Part-Dieu station'},
+    {id:134,time:'16:16',name:'抵達香貝里',place:'Chambéry',duration:'',desc:'步行5-8分至 La Maison des Ducs',note:'全平路直推',type:'transport',gmap:'Chambery station'},
+    {id:135,time:'17:00',name:'空手逛老城',place:'Chambéry 老城',duration:'',desc:'Beaufort高山起司、手工巧克力、義式拱廊街',note:'',type:'spot',gmap:'Vieille ville Chambery'},
+    {id:136,time:'18:30',name:'大象噴泉拍全家福',place:'Fontaine des Éléphants',duration:'',desc:'香貝里地標四象噴泉',note:'',type:'spot',gmap:'Fontaine des Elephants Chambery'},
+    {id:137,time:'19:00',name:'晚餐：Le Savoyard',place:'35 Place Monge',duration:'',desc:'薩伏依地區料理，乳酪火鍋 Raclette',note:'⭐4.5 · 備選 Restaurant Amedee',type:'food',gmap:'Restaurant le Savoyard Chambery',score:'⭐4.5'},
+  ],
+  8:[
+    {id:150,time:'09:15',name:'薩伏依公爵城堡 + 花卉市集',place:'Château des Ducs',duration:'',desc:'公爵城堡拍全家福，週日花卉市集買可頌',note:'',type:'spot',gmap:'Chateau des Ducs de Savoie Chambery',guide:'薩伏依公爵的中世紀城堡，曾是薩伏依王朝權力中心。城堡內的聖禮拜堂藏有著名的「都靈裹屍布」複製品（正本現存杜林）。週日城堡前廣場有花卉市集，可買現烤可頌當早餐，氣氛悠閒。'},
+    {id:151,time:'10:15',name:'勒韋內公園放電',place:'Parc du Verney',duration:'',desc:'兒童遊樂場，長輩坐長椅',note:'',type:'spot',gmap:'Parc du Verney Chambery'},
+    {id:152,time:'12:44',name:'TGV 9247 ➝ Turin',place:'Chambéry',duration:'2h39',desc:'1st Coach 13，穿越Fréjus阿爾卑斯隧道',note:'待購票',type:'transport',gmap:'Chambery station'},
+    {id:153,time:'15:23',name:'抵達 Turin Porta Susa',place:'Torino Porta Susa',duration:'',desc:'計程車至飯店',note:'⚠️抵達站Porta Susa',type:'transport',gmap:'Torino Porta Susa station'},
+    {id:154,time:'16:30',name:'Via Roma 巴洛克拱廊街',place:'Via Roma',duration:'',desc:'杜林精華購物大道，拱廊遮陽',note:'全程防曬',type:'spot',gmap:'Via Roma Torino',guide:'杜林最優雅的購物大道，兩側是18公里長的巴洛克拱廊（杜林以拱廊街聞名全義），可全程遮陽避雨。連接城堡廣場與聖卡羅廣場，精品名店與百年咖啡館林立，是感受杜林皇家氣派的最佳散步路線。'},
+    {id:155,time:'17:30',name:'Caffè Torino · Bicerin + Gelato',place:'Piazza San Carlo',duration:'',desc:'杜林招牌Bicerin巧克力咖啡',note:'',type:'food',gmap:'Caffe Torino Italy',score:'⭐4.4'},
+    {id:156,time:'19:30',name:'晚餐：La Taverna Dei Mercanti',place:'Torino 市中心',duration:'',desc:'皮埃蒙特松露蛋黃麵 Tajarin',note:'備選 Osteria Nuova',type:'food',gmap:'La Taverna Dei Mercanti Torino',score:'⭐4.7'},
+  ],
+  9:[
+    {id:170,time:'10:00',name:'杜林埃及博物館',place:'Museo Egizio',duration:'2.5小時',desc:'全球第二大埃及博物館，僅次開羅',note:'週一不休 · 室內冷氣',type:'spot',gmap:'Museo Egizio Torino',official:'https://www.museoegizio.it',guide:'全球第二大、僅次於開羅的埃及博物館，收藏超過3萬件文物。完整的木乃伊、紙莎草、神廟雕像與整座墓室重現，數量與品質令人驚嘆。孩子看到木乃伊與巨型法老雕像會大開眼界。與多數博物館不同，週一正常開放。'},
+    {id:171,time:'13:15',name:'午餐：Brün 手工麵',place:'Torino',duration:'',desc:'Agnolotti 手工義大利麵',note:'⭐4.7 · 備選 窯烤披薩',type:'food',gmap:'Brun Buona Pasta Fresca Torino',score:'⭐4.7'},
+    {id:172,time:'15:30',name:'飯店午睡 1.5 小時',place:'',duration:'',desc:'',note:'',type:'hotel',gmap:''},
+    {id:173,time:'17:00',name:'杜林皇家花園',place:'Giardini Reali',duration:'',desc:'皇家草坪奔跑，林蔭吹風',note:'免費',type:'spot',gmap:'Giardini Reali Torino'},
+    {id:174,time:'19:30',name:'晚餐：Osteria Nuova',place:'Torino',duration:'',desc:'松露麵、皮埃蒙特菜',note:'⭐4.7',type:'food',gmap:'Osteria Nuova Torino',score:'⭐4.7'},
+  ],
+  10:[
+    {id:190,time:'10:15',name:'計程車至 Porta Nuova',place:'Torino Porta Nuova',duration:'',desc:'終點式月台，全平面無障礙',note:'⚠️非Porta Susa！',type:'transport',gmap:'Torino Porta Nuova station'},
+    {id:191,time:'11:10',name:'Italo ➝ Milano Centrale',place:'Torino Porta Nuova',duration:'1h',desc:'Prima Business 商務艙',note:'待購票',type:'transport',gmap:'Torino Porta Nuova station'},
+    {id:192,time:'12:10',name:'Smart Hotel 寄存行李',place:'Milano Centrale 旁',duration:'',desc:'',note:'',type:'hotel',gmap:'Smart Hotel Milano Centrale'},
+    {id:193,time:'14:00',name:'布雷拉區 Brera 漫步',place:'Brera',duration:'',desc:'米蘭藝術街區，藝廊與精品店',note:'義式冰淇淋消暑',type:'spot',gmap:'Brera district Milan',guide:'米蘭最具藝術氣息的街區，鵝卵石巷弄間散布著畫廊、古董店、設計小舖與露天咖啡館。布雷拉美術館收藏義大利文藝復興名作。傍晚是當地人的 aperitivo 餐前酒時光，氣氛悠閒迷人，適合悠閒散步配一支道地 gelato。'},
+    {id:194,time:'19:30',name:'晚餐：Ristorante Nabucco',place:'Brera',duration:'',desc:'番紅花燉飯 Risotto alla Milanese',note:'備選 Il Cestino(披薩)',type:'food',gmap:'Ristorante Nabucco Brera Milano',score:'⭐4.2'},
+  ],
+  11:[
+    {id:210,time:'09:45',name:'《最後的晚餐》達文西真跡',place:'Santa Maria delle Grazie',duration:'',desc:'達文西曠世名作，每梯次限15分鐘',note:'⚠️需提前2-3個月搶票',type:'spot',gmap:'Cenacolo Vinciano Milano',todo:true,official:'https://cenacolovinciano.org',guide:'達文西1495-98年繪於感恩聖母教堂食堂牆上的曠世巨作，描繪耶穌宣告門徒中有人將背叛時的瞬間。為保護壁畫，每梯次僅15分鐘、限額入場，是全義大利最難訂的景點，務必提前2-3個月於官網搶票。'},
+    {id:211,time:'11:00',name:'森皮奧內公園',place:'Parco Sempione',duration:'',desc:'米蘭最大市區綠地，孩子放電',note:'免費',type:'spot',gmap:'Parco Sempione Milano'},
+    {id:212,time:'14:00',name:'午餐',place:'大教堂周邊',duration:'',desc:'大教堂周邊 / 艾曼紐迴廊咖啡館',note:'',type:'food',gmap:'Duomo di Milano'},
+    {id:213,time:'15:30',name:'米蘭大教堂 + 艾曼紐迴廊',place:'Duomo di Milano',duration:'',desc:'哥德式大教堂 + 精品玻璃拱廊',note:'精品採購、拱廊遮陽',type:'spot',gmap:'Duomo di Milano',guide:'米蘭地標，歷時近600年建成的白色大理石哥德式教堂，135座尖塔與3400尊雕像繁複壯觀，可登頂俯瞰。旁邊的艾曼紐二世迴廊是世界最古老購物廊之一，玻璃穹頂下名牌精品與百年咖啡館雲集，在公牛馬賽克上轉一圈是當地習俗。'},
+    {id:214,time:'19:30',name:'畢業晚宴',place:'Brera / 大教堂周邊',duration:'',desc:'法義跨國之旅壓軸',note:'Ristorante Nabucco / 精緻餐廳',type:'food',gmap:'Ristorante Nabucco Brera Milano'},
+  ],
+  12:[
+    {id:230,time:'08:00',name:'早餐後退房',place:'Smart Hotel',duration:'',desc:'miscusi新鮮義大利麵',note:'車站旁 · 備選 Hostaria La Baita',type:'food',gmap:'Smart Hotel Milano Centrale'},
+    {id:231,time:'08:30',name:'平推行李至中央車站',place:'Milano Centrale',duration:'',desc:'Malpensa Express月台在地下層',note:'找電梯',type:'transport',gmap:'Milano Centrale station'},
+    {id:232,time:'09:10',name:'Malpensa Express ➝ MXP',place:'Milano Centrale',duration:'52分',desc:'機場快線直達 Malpensa T1',note:'每30分一班',type:'transport',gmap:'Milano Centrale station'},
+    {id:233,time:'11:15',name:'長榮 BR096 起飛',place:'Malpensa MXP',duration:'',desc:'返回台灣',note:'',type:'transport',gmap:'Milan Malpensa Airport'},
+  ],
+};
+
+// ─── RESTAURANTS ───
+const RESTS = [
+  {id:'cr',day:'d2',dayLabel:'Day2 · 午餐',type:'迪士尼主題',name:'Bistrot Chez Rémy',nameJp:'鼠來寶餐廳',score:'已訂',booked:true,location:'Disney Adventure World 新園',gmap:'Bistrot Chez Remy Disneyland Paris',official:'https://www.disneylandparis.com',
+   pros:['全迪士尼評價最高','沉浸式鼠來寶場景','份量大兒童友善'],cons:['主打體驗大於美味','旺季需提前訂位'],
+   reviews:[{text:'一走進去就變成小老鼠，超大尺寸場景帶來真正沉浸式體驗，孩子超興奮！',author:'親子旅遊blog 2025'}],
+   menu:[{jp:'Menu Émile',zh:'Émile套餐（前菜+主菜+甜點）',note:'最完整',price:55,kids:false,rec:'🌟必點'},
+     {jp:'Menu Rémy',zh:'Rémy套餐（前菜+主菜）',price:45,kids:false},
+     {jp:'Grilled Beef',zh:'炭烤牛排',note:'建議七分熟',price:0,kids:false,rec:'主廚推薦'},
+     {jp:'Little Chef Menu',zh:'兒童套餐（前菜+主菜+甜點+飲料）',price:30,kids:true,rec:'👧適合'},
+     {jp:'Birthday Cake',zh:'生日蛋糕（2人以上）',note:'點餐前告知',price:25,kids:true}]},
+  {id:'cj',day:'d3',dayLabel:'Day3 · 午餐',type:'迪士尼主題',name:'Captain Jack\u0027s',nameJp:'海盜餐廳',score:'已訂',booked:true,location:'Adventureland 加勒比海盜設施內',gmap:'Captain Jacks Disneyland Paris',
+   pros:['坐在海盜船遊河道旁用餐','昏暗火把氣氛無可取代','克里奧爾風味料理'],cons:['價位偏高','設施內較暗'],
+   reviews:[{text:'實際坐在加勒比海盜設施內部，旁邊就是船遊河道，氣氛是全迪士尼最棒的！',author:'迪士尼達人 2025'}],
+   menu:[{jp:'Creole Specialties',zh:'克里奧爾料理',note:'加勒比風味',price:35,kids:false,rec:'🌟'},
+     {jp:'Kids Menu',zh:'兒童餐',price:0,kids:true,rec:'👧適合'}]},
+  {id:'pippo',day:'d3',dayLabel:'Day3 · 晚餐',type:'義式',name:'Chez Pippo',nameJp:'巴黎第7區',score:'⭐4.6',location:'31 Av. de la Bourdonnais, 75007（步行6分）',gmap:'Chez Pippo Paris',
+   pros:['義大利料理孩子接受度高','份量足價格實惠','離住宿步行6分'],cons:['旺季晚餐人多','建議訂位'],
+   reviews:[{text:'披薩跟手工義大利麵都很道地，帶小孩來完全沒壓力，服務親切。',author:'Google評論'}],
+   menu:[{jp:'Pizza Margherita',zh:'瑪格麗特披薩',price:14,kids:true,rec:'👧'},
+     {jp:'Pasta Bolognese',zh:'波隆那肉醬麵',price:16,kids:true},
+     {jp:'Risotto',zh:'義式燉飯',price:18,kids:false}]},
+  {id:'bici',day:'d4',dayLabel:'Day4 · 晚餐',type:'義式',name:'Bici Trattoria Eiffel',nameJp:'鐵塔旁',score:'⭐4.5',location:'Rue Saint-Dominique（步行3分）',gmap:'Bici Trattoria Paris',
+   pros:['離住宿步行3分最近','輕鬆氣氛孩子友善','戶外座位可看鐵塔'],cons:['座位有限','旺季需等候'],
+   reviews:[{text:'位置超好，吃完散步就能看鐵塔點燈，義大利麵分量足。',author:'Google評論'}],
+   menu:[{jp:'Pizza',zh:'窯烤披薩',price:15,kids:true,rec:'👧'},
+     {jp:'Pasta',zh:'手工義大利麵',price:16,kids:true}]},
+  {id:'leshalles',day:'d5',dayLabel:'Day5 · 午餐',type:'市場美食',name:'Les Halles Paul Bocuse',nameJp:'保羅博庫斯室內市場',score:'⭐4.5',location:'102 Cours Lafayette（車站步行8分）',gmap:'Les Halles Paul Bocuse Lyon',official:'https://www.hallespaulbocuse.com',
+   pros:['2026全球第三佳市場','56攤位海鮮起司熟食','不需訂位自由入座'],cons:['週日只到13:00','用餐區較擁擠'],
+   reviews:[{text:'坐在海鮮攤現開生蠔配白酒，是里昂人最愛的午餐方式，Praline玫瑰塔必買！',author:'美食blog 2025'}],
+   menu:[{jp:'Huîtres',zh:'現開生蠔',note:'配白酒',price:18,kids:false,rec:'🌟'},
+     {jp:'Plateau de Fruits de Mer',zh:'海鮮拼盤',price:32,kids:false},
+     {jp:'Tarte aux Pralines',zh:'Praline玫瑰塔',note:'里昂名物',price:6,kids:true,rec:'👧必嚐'}]},
+  {id:'lesud',day:'d5',dayLabel:'Day5 · 晚餐',type:'地中海',name:'Brasserie Le Sud - Bocuse',nameJp:'Bocuse地中海小酒館',score:'待訂',todo:true,location:'11 Place Antonin Poncet（Bellecour旁）',gmap:'Brasserie Le Sud Bocuse Lyon',official:'https://www.maisons-bocuse.com',
+   pros:['Bocuse品牌保障','地中海菜孩子接受度高','官網標榜家庭友善'],cons:['桌間距小人多較吵','旺季強烈建議訂位'],
+   reviews:[{text:'熱鬧的Brasserie氣氛，地中海料理清爽，帶小孩來很自在。',author:'TheFork評論'}],
+   menu:[{jp:'Menu 3 plats',zh:'三道式套餐（前菜+主菜+甜點）',note:'週間',price:34.5,kids:false,rec:'🌟'},
+     {jp:'Salade Niçoise',zh:'尼斯沙拉',price:0,kids:true},
+     {jp:'Menu Enfant',zh:'兒童套餐',price:14,kids:true,rec:'👧'}]},
+  {id:'auberge',day:'d6',dayLabel:'Day6 · 午餐',type:'里昂Bouchon',name:'L\u0027Auberge des Canuts',nameJp:'老城正統小酒館',score:'⭐4.5',location:'8 Place Saint-Jean 老城',gmap:'Auberge des Canuts Lyon',
+   pros:['Traboules旁最順路','正統里昂Bouchon','出菜快兒童友善'],cons:['老城觀光區','旺季需訂位'],
+   reviews:[{text:'道地的里昂小酒館料理，油封鴨腿很入味，位置就在老城核心。',author:'Google評論'}],
+   menu:[{jp:'Confit de Canard',zh:'油封鴨腿',price:18,kids:false,rec:'🌟'},
+     {jp:'Quenelle de Brochet',zh:'里昂魚糕',note:'里昂名菜',price:16,kids:true},
+     {jp:'Salade Lyonnaise',zh:'里昂沙拉（溫泉蛋培根）',price:12,kids:false}]},
+  {id:'feder',day:'d6',dayLabel:'Day6 · 晚餐',type:'里昂Bouchon',name:'Le Café des Fédérations',nameJp:'最經典傳統Bouchon',score:'⭐4.5',location:'10 Rue Major Martin 市中心',gmap:'Le Cafe des Federations Lyon',
+   pros:['里昂最經典Bouchon','€34套餐8道菜超值','木板裝潢極有氣氛'],cons:['需訂位','傳統菜色較重口味'],
+   reviews:[{text:'€34吃到8道傳統里昂菜，從開胃菜到甜點滿滿一桌，氣氛超棒！',author:'美食家 2025'}],
+   menu:[{jp:'Menu Traditionnel',zh:'傳統套餐（8道菜）',price:34,kids:false,rec:'🌟必點'},
+     {jp:'Tablier de Sapeur',zh:'里昂炸牛肚',note:'特色菜',price:0,kids:false}]},
+  {id:'batdargent',day:'d7',dayLabel:'Day7 · 晚餐',type:'里昂Bouchon',name:'Bouchon Bât-d\u0027Argent',nameJp:'里昂最後晚餐',score:'⭐4.6',location:'23 Rue du Bât d\u0027Argent 市中心',gmap:'Bouchon Bat d\u0027Argent Lyon',
+   pros:['TheFork評9.2分','10小時慢燉豬入口即化','Praline玫瑰塔必點'],cons:['需訂位','週一日公休'],
+   reviews:[{text:'慢燉豬肉軟到入口即化，玫瑰塔甜點完美收尾，里昂最後一餐選這家太對了。',author:'TheFork 2025'}],
+   menu:[{jp:'Cochon confit 10h',zh:'10小時慢燉豬肉',price:19,kids:false,rec:'🌟必點'},
+     {jp:'Tarte aux Pralines',zh:'Praline玫瑰塔',price:7,kids:true,rec:'👧'}]},
+  {id:'savoyard',day:'d8',dayLabel:'Day8 · 晚餐',type:'薩伏依料理',name:'Le Savoyard',nameJp:'香貝里乳酪火鍋',score:'⭐4.5',location:'35 Place Monge 香貝里老城',gmap:'Restaurant le Savoyard Chambery',
+   pros:['薩伏依地區傳統料理','乳酪火鍋Raclette暖心','老城氣氛佳'],cons:['乳酪料理較膩','份量大'],
+   reviews:[{text:'阿爾卑斯山區的乳酪火鍋名不虛傳，孩子玩融化的起司玩得很開心。',author:'Google評論'}],
+   menu:[{jp:'Raclette',zh:'薩伏依乳酪火鍋',note:'刮起司',price:24,kids:true,rec:'🌟'},
+     {jp:'Fondue Savoyarde',zh:'起司鍋',price:22,kids:true,rec:'👧'},
+     {jp:'Tartiflette',zh:'焗烤馬鈴薯培根',price:16,kids:true}]},
+  {id:'mercanti',day:'d9',dayLabel:'Day9 · 晚餐',type:'皮埃蒙特菜',name:'La Taverna Dei Mercanti',nameJp:'杜林松露麵',score:'⭐4.7',location:'Torino 市中心',gmap:'La Taverna Dei Mercanti Torino',
+   pros:['皮埃蒙特傳統料理','松露蛋黃麵Tajarin','評分極高'],cons:['週日可能公休','需訂位'],
+   reviews:[{text:'手工Tajarin蛋黃麵配松露太香了，皮埃蒙特菜的精髓都在這。',author:'TripAdvisor'}],
+   menu:[{jp:'Tajarin al Tartufo',zh:'松露蛋黃麵',note:'皮埃蒙特名菜',price:18,kids:false,rec:'🌟必點'},
+     {jp:'Agnolotti',zh:'手工方餃',price:14,kids:true,rec:'👧'},
+     {jp:'Vitello Tonnato',zh:'鮪魚醬小牛肉',price:13,kids:false}]},
+  {id:'brun',day:'d10',dayLabel:'Day10 · 午餐',type:'手工麵',name:'Brün - Buona Pasta Fresca',nameJp:'杜林手工麵',score:'⭐4.7',location:'Torino',gmap:'Brun Buona Pasta Fresca Torino',
+   pros:['現做手工義大利麵','Agnolotti必點','快速平價'],cons:['座位少','午餐時段排隊'],
+   reviews:[{text:'現做的Agnolotti手工麵，皮薄餡多，價格實惠味道一流。',author:'Google評論'}],
+   menu:[{jp:'Agnolotti del Plin',zh:'皮埃蒙特手工方餃',price:12,kids:true,rec:'🌟'},
+     {jp:'Tajarin',zh:'蛋黃細麵',price:11,kids:true,rec:'👧'}]},
+  {id:'osterianuova',day:'d10',dayLabel:'Day10 · 晚餐',type:'皮埃蒙特菜',name:'Osteria Nuova',nameJp:'杜林傳統菜',score:'⭐4.7',location:'Torino',gmap:'Osteria Nuova Torino',
+   pros:['皮埃蒙特傳統菜','松露料理','在地人推薦'],cons:['需訂位','份量大'],
+   reviews:[{text:'道地的杜林家常菜，松露麵與燉牛肉都很出色。',author:'TripAdvisor'}],
+   menu:[{jp:'Tajarin al Tartufo',zh:'松露蛋黃麵',price:17,kids:false,rec:'🌟'},
+     {jp:'Brasato al Barolo',zh:'巴羅洛紅酒燉牛肉',price:18,kids:false}]},
+  {id:'nabucco',day:'d11',dayLabel:'Day11 · 晚餐',type:'米蘭菜',name:'Ristorante Nabucco',nameJp:'布雷拉區',score:'⭐4.2',location:'Brera 藝術區',gmap:'Ristorante Nabucco Brera Milano',
+   pros:['布雷拉區氣氛佳','番紅花燉飯道地','適合慶祝晚宴'],cons:['觀光區價位偏高','需訂位'],
+   reviews:[{text:'米蘭名菜番紅花燉飯金黃濃郁，布雷拉區的浪漫氣氛很適合最後一晚。',author:'TripAdvisor'}],
+   menu:[{jp:'Risotto alla Milanese',zh:'番紅花燉飯',note:'米蘭名菜',price:18,kids:true,rec:'🌟必點'},
+     {jp:'Cotoletta alla Milanese',zh:'米蘭炸牛排',price:24,kids:true,rec:'👧'},
+     {jp:'Ossobuco',zh:'燉牛膝',price:26,kids:false}]},
+  {id:'miscusi',day:'d13',dayLabel:'Day13 · 早餐',type:'義式輕食',name:'miscusi',nameJp:'米蘭中央車站',score:'⭐4.3',location:'Milano Centrale 車站旁',gmap:'miscusi Milano Centrale',
+   pros:['新鮮義大利麵','車站旁方便','快速'],cons:['早餐選項較少','連鎖店'],
+   reviews:[{text:'返程前最後一餐，新鮮現做義大利麵，車站旁很方便。',author:'Google評論'}],
+   menu:[{jp:'Pasta Fresca',zh:'新鮮義大利麵',price:12,kids:true,rec:'👧'}]},
+];
+
+// ─── TRAINS / HOTELS ───
+const TRAINS = [
+  {code:'TGV 12512',time:'8/16 09:57 CDG T2 → Chessy',note:'1st Coach 11 · 已訂 ✅'},
+  {code:'RER A',time:'8/17 16:05 Chessy → Auber',note:'轉地鐵8號線 · €2.55/人'},
+  {code:'TGV 6611',time:'8/19 11:00 巴黎 → Lyon Part-Dieu',note:'Première 頭等艙 · 待購'},
+  {code:'TER',time:'8/22 14:50 Lyon → Chambéry',note:'自由座 · 待購'},
+  {code:'TGV 9247',time:'8/23 12:44 Chambéry → Turin Porta Susa',note:'1st Coach 13 · 待購'},
+  {code:'Italo',time:'8/25 11:10 Turin Porta Nuova → Milano',note:'Prima Business · 待購'},
+  {code:'Malpensa Express',time:'8/27 ~09:10 Milano → MXP',note:'機場快線 · 現場購票'},
+];
+const HOTELS = [
+  {name:'Disneyland Hôtel',nights:'8/16-17 · 含早餐+下午茶+門票',map:'Disneyland Hotel Paris'},
+  {name:'2 Rue Duvivier 公寓',nights:'8/17-19 · 巴黎第7區鐵塔圈',map:'2 Rue Duvivier 75007 Paris'},
+  {name:'Pullman Lyon',nights:'8/19-22 · Part-Dieu站旁',map:'Pullman Lyon Part-Dieu'},
+  {name:'La Maison des Ducs',nights:'8/22-23 · 香貝里公爵城堡旁',map:'La Maison des Ducs Chambery'},
+  {name:'杜林市中心飯店',nights:'8/23-25 · 近Via Roma',map:'Turin city center hotel'},
+  {name:'Smart Hotel 米蘭',nights:'8/25-27 · 中央車站旁',map:'Smart Hotel Milano Centrale'},
+];
+
+// ─── PHRASES ───
+const FR_PHRASES = [
+  {z:'你好 / 謝謝',m:'Bonjour / Merci',r:'bon-jour / mair-see'},
+  {z:'請給我這個',m:'Je voudrais ça, s\u0027il vous plaît',r:'熱 voo-dray sa, seel voo pleh'},
+  {z:'多少錢？',m:'C\u0027est combien ?',r:'say com-bee-an'},
+  {z:'買單',m:'L\u0027addition, s\u0027il vous plaît',r:'la-dee-see-on, seel voo pleh'},
+  {z:'我們有5位',m:'Nous sommes cinq',r:'noo som sank'},
+  {z:'有兒童餐嗎？',m:'Avez-vous un menu enfant ?',r:'a-vay voo an menu on-fon'},
+  {z:'廁所在哪？',m:'Où sont les toilettes ?',r:'oo son lay twa-let'},
+  {z:'我有訂位',m:'J\u0027ai une réservation',r:'zhay oon ray-zair-va-see-on'},
+];
+const IT_PHRASES = [
+  {z:'你好 / 謝謝',m:'Buongiorno / Grazie',r:'bwon-jor-no / grat-tsee-eh'},
+  {z:'請給我這個',m:'Vorrei questo, per favore',r:'vor-ray kwes-to, pair fa-vo-reh'},
+  {z:'多少錢？',m:'Quanto costa ?',r:'kwan-to kos-ta'},
+  {z:'買單',m:'Il conto, per favore',r:'eel kon-to, pair fa-vo-reh'},
+  {z:'我們有5位',m:'Siamo in cinque',r:'see-ah-mo een chin-kweh'},
+  {z:'有兒童餐嗎？',m:'Avete un menu per bambini ?',r:'a-veh-teh oon menu pair bam-bee-nee'},
+  {z:'廁所在哪？',m:'Dov\u0027è il bagno ?',r:'do-veh eel ban-yo'},
+  {z:'我有訂位',m:'Ho una prenotazione',r:'oh oo-na pre-no-ta-tsee-o-neh'},
+];
+
+// ─── CHECKLIST ───
+const CHECKLIST = [
+  {title:'🎫 證件與訂票',items:[
+    {id:'c1',name:'護照（效期6個月以上）+ 影本',sub:'全家5本，分開存放'},
+    {id:'c2',name:'ETIAS 旅行授權（若已生效）',sub:'出發前確認是否需要'},
+    {id:'c3',name:'機票電子檔 BR087 / BR096'},
+    {id:'c4',name:'TGV / Italo 車票（6611/9247/Italo）',sub:'下載離線車票'},
+    {id:'c5',name:'迪士尼訂房 + 餐廳訂位（Chez Rémy/Captain Jack\u0027s）'},
+    {id:'c6',name:'鐵塔登頂 + 聖徒禮拜堂 + 最後的晚餐門票',sub:'最緊急，提前搶'},
+    {id:'c7',name:'各飯店訂房確認信'},
+  ]},
+  {title:'📱 數位準備',items:[
+    {id:'c8',name:'歐洲上網SIM / eSIM',sub:'多國通用'},
+    {id:'c9',name:'Google Maps 離線地圖（6城市）'},
+    {id:'c10',name:'巴黎聖母院官方App（搶預約）'},
+    {id:'c11',name:'萬國轉接插頭（歐規）+ 行動電源'},
+  ]},
+  {title:'💶 金錢',items:[
+    {id:'c12',name:'歐元現金（市集小館用）'},
+    {id:'c13',name:'Taishin Richart 信用卡',sub:'海外消費回饋高'},
+    {id:'c14',name:'防扒腰包 / 斜背包',sub:'觀光區慎防扒手'},
+  ]},
+  {title:'👶 親子必備',items:[
+    {id:'c15',name:'防曬乳 + 遮陽帽（8月炎熱）'},
+    {id:'c16',name:'孩子常備藥 + 健保卡'},
+    {id:'c17',name:'水壺（園區公園補水）'},
+    {id:'c18',name:'輕便推車 / 揹巾（長輩孩子備用）'},
+    {id:'c19',name:'孩子愛吃的小零食（排隊墊肚子）'},
+  ]},
+];
+
+// ─── CITY MAP CENTERS ───
+const CITY_CENTER = {
+  0:[25.0777,121.2328],1:[48.8723,2.7839],2:[48.8566,2.2976],3:[48.8550,2.3300],
+  4:[45.7600,4.8590],5:[45.7620,4.8270],6:[45.7700,4.8350],7:[45.5646,5.9178],
+  8:[45.0703,7.6869],9:[45.0680,7.6850],10:[45.4860,9.2050],11:[45.4640,9.1900],12:[45.6300,8.7280],
+};
+
+const app = createApp({
+  setup(){
+    const tab=ref('itinerary');
+    const dayIdx=ref(0);
+    const mapDay=ref(0);
+    const meta={title:'France & Italy',sub:'法義家族鐵路慢遊 · 8/15-8/27'};
+    const days=ref(TRIP_DAYS.map(d=>({...d,wxIcon:'',wx:null})));
+    const trains=TRAINS, hotels=HOTELS, frPhrases=FR_PHRASES, itPhrases=IT_PHRASES, checklist=CHECKLIST;
+
+    // itinerary state
+    const itin=ref(JSON.parse(JSON.stringify(DEFAULT_ITIN)));
+    const curDay=computed(()=>days.value[dayIdx.value]);
+    const curItems=computed(()=>{
+      const arr=(itin.value[dayIdx.value]||[]).slice();
+      arr.sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+      return arr;
+    });
+
+    // ─── WEATHER ───
+    const WX_CODE={0:'☀️',1:'🌤',2:'⛅',3:'☁️',45:'🌫',48:'🌫',51:'🌦',53:'🌧',55:'🌧',61:'🌧',63:'🌧',65:'🌧',80:'🌦',81:'🌧',82:'⛈',95:'⛈',96:'⛈',99:'⛈'};
+    // 8月歐洲歷史氣候參考（日期超出16天預報時使用）
+    const WX_FB=[
+      {icon:'⛅',max:27,min:17,rain:20},{icon:'🌤',max:27,min:17,rain:20},
+      {icon:'☀️',max:28,min:18,rain:15},{icon:'☀️',max:28,min:18,rain:15},
+      {icon:'☀️',max:30,min:18,rain:15},{icon:'☀️',max:31,min:19,rain:10},
+      {icon:'🌤',max:30,min:19,rain:20},{icon:'⛅',max:28,min:17,rain:25},
+      {icon:'☀️',max:30,min:19,rain:15},{icon:'☀️',max:31,min:20,rain:15},
+      {icon:'☀️',max:32,min:21,rain:15},{icon:'🌤',max:31,min:21,rain:20},
+      {icon:'⛅',max:31,min:20,rain:20}
+    ];
+    const wxIdx=ref(0);
+    const selWx=computed(()=>days.value[wxIdx.value]?days.value[wxIdx.value].wx:null);
+    const wxDesc=(icon)=>({'☀️':'晴天','🌤':'多雲偶晴','⛅':'部分多雲','☁️':'陰天','🌦':'短暫陣雨','🌧':'雨天','⛈':'雷雨','🌫':'有霧','🌡':'未知'}[icon]||icon);
+    const wxAdvice=(wx)=>{
+      if(!wx)return '';
+      const s=[];
+      if(wx.rain>60)s.push('☔ 降雨機率高，出門務必帶傘！');
+      else if(wx.rain>30)s.push('🌂 有些許降雨可能，備折傘以防萬一。');
+      else s.push('☀️ 天氣晴朗乾燥，適合出遊！');
+      if(wx.min<16)s.push('🧥 早晚較涼，備薄外套。');
+      if(wx.max>30)s.push('🌞 白天炎熱，務必防曬補水。');
+      return s.join(' ');
+    };
+    const packingTips=computed(()=>{
+      const wxArr=days.value.map(d=>d.wx).filter(Boolean);
+      const maxRain=wxArr.length?Math.max.apply(null,wxArr.map(w=>w.rain)):20;
+      const maxT=wxArr.length?Math.max.apply(null,wxArr.map(w=>w.max)):31;
+      const minT=wxArr.length?Math.min.apply(null,wxArr.map(w=>w.min)):17;
+      const t=[];
+      if(maxRain>40)t.push('☔ 部分天有雨，折傘隨身以防萬一');
+      else t.push('☀️ 整體晴朗乾燥，雨具備用即可');
+      if(maxT>=30)t.push('🌞 白天炎熱可達30°C以上，防曬帽、太陽眼鏡、SPF50防曬乳必備');
+      if(minT<18)t.push('🧥 早晚較涼，備一件薄外套或長袖');
+      t.push('💧 夏季乾熱，隨身水壺補水（歐洲餐廳水多需付費）');
+      t.push('👟 全程大量步行，舒適好走的鞋最重要');
+      t.push('🕶 8月南歐紫外線強烈，孩子也務必防曬');
+      t.push('👗 8月氣溫約17–33°C，輕薄透氣衣物為主');
+      return t;
+    });
+    const applyFallback=()=>{
+      days.value.forEach((dy,i)=>{
+        if(!dy.wx){
+          const f=Object.assign({},WX_FB[i]||WX_FB[0],{src:'fb'});
+          days.value.splice(i,1,Object.assign({},days.value[i],{wx:f,wxIcon:f.icon}));
+        }
+      });
+    };
+    const loadAllWx=async()=>{
+      const today=new Date();today.setHours(0,0,0,0);
+      // 依各城市座標分組（同座標只抓一次）
+      const groups={};
+      days.value.forEach((dy,i)=>{
+        const c=CITY_CENTER[i]||[48.85,2.35];
+        const key=c[0].toFixed(2)+','+c[1].toFixed(2);
+        if(!groups[key])groups[key]={lat:c[0],lon:c[1],idxs:[]};
+        groups[key].idxs.push(i);
+      });
+      for(const key in groups){
+        const g=groups[key];
+        try{
+          const url='https://api.open-meteo.com/v1/forecast?latitude='+g.lat+'&longitude='+g.lon+'&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset&timezone=Europe%2FParis&forecast_days=16';
+          const res=await fetch(url);
+          if(!res.ok)continue;
+          const data=await res.json();
+          if(data&&data.daily&&data.daily.time){
+            const dts=data.daily.time;
+            g.idxs.forEach(i=>{
+              const dy=days.value[i];
+              const di=dts.indexOf(dy.date);
+              if(di>=0){
+                const code=data.daily.weathercode[di];
+                const wx={icon:WX_CODE[code]||'🌡',max:Math.round(data.daily.temperature_2m_max[di]),min:Math.round(data.daily.temperature_2m_min[di]),rain:data.daily.precipitation_probability_max[di]||0,sunrise:(data.daily.sunrise&&data.daily.sunrise[di])?data.daily.sunrise[di].slice(11):'',sunset:(data.daily.sunset&&data.daily.sunset[di])?data.daily.sunset[di].slice(11):'',src:'api'};
+                days.value.splice(i,1,Object.assign({},days.value[i],{wx,wxIcon:wx.icon}));
+              }
+            });
+          }
+        }catch(e){}
+      }
+      applyFallback();
+    };
+
+    const rests=ref(RESTS);
+    const restOpen=ref({});
+    const restFilter=ref('all');
+    const restFilters=[{v:'all',l:'全部'},{v:'迪士尼主題',l:'迪士尼'},{v:'義式',l:'義式'},
+      {v:'里昂Bouchon',l:'里昂小酒館'},{v:'皮埃蒙特菜',l:'杜林'},{v:'米蘭菜',l:'米蘭'}];
+    const filteredRests=computed(()=>{
+      if(restFilter.value==='all')return rests.value;
+      return rests.value.filter(r=>r.type===restFilter.value);
+    });
+    const toggleRest=(id)=>{restOpen.value={...restOpen.value,[id]:!restOpen.value[id]};};
+
+    // currency
+    const eurTwd=ref(35.5);
+
+    // map (Google Maps embed)
+    const mapSpots=computed(()=>(itin.value[mapDay.value]||[]).filter(i=>i.gmap).slice().sort((a,b)=>(a.time||'').localeCompare(b.time||'')));
+    const mapFocus=ref('');  // current query to center the embed on
+    const gmapEmbed=computed(()=>{
+      let q=mapFocus.value;
+      if(!q){
+        const sp=mapSpots.value;
+        if(sp.length) q=sp[0].gmap||sp[0].name;
+        else { const c=CITY_CENTER[mapDay.value]||[48.8566,2.35]; q=c[0]+','+c[1]; }
+      }
+      return 'https://maps.google.com/maps?q='+encodeURIComponent(q)+'&z=14&hl=zh-TW&output=embed';
+    });
+    // reset focus to the day's first spot whenever the map day changes
+    watch(mapDay,()=>{ mapFocus.value=''; });
+    const showOnMap=(item)=>{ mapFocus.value=item.gmap||item.name; };
+    const openDayRoute=()=>{
+      const sp=mapSpots.value;
+      if(!sp.length){ const c=CITY_CENTER[mapDay.value]||[48.8566,2.35]; window.open('https://www.google.com/maps/search/?api=1&query='+c[0]+','+c[1],'_blank'); return; }
+      if(sp.length===1){ openNav(sp[0].gmap||sp[0].name); return; }
+      const enc=(s)=>encodeURIComponent(s.gmap||s.name);
+      const origin=enc(sp[0]); const dest=enc(sp[sp.length-1]);
+      const mids=sp.slice(1,-1).map(enc).join('%7C'); // %7C = |
+      let url='https://www.google.com/maps/dir/?api=1&origin='+origin+'&destination='+dest+'&travelmode=transit';
+      if(mids) url+='&waypoints='+mids;
+      window.open(url,'_blank');
+    };
+    const openMyLocation=()=>{
+      if(!navigator.geolocation){ window.open('https://www.google.com/maps','_blank'); return; }
+      navigator.geolocation.getCurrentPosition(p=>{
+        window.open('https://www.google.com/maps/search/?api=1&query='+p.coords.latitude+','+p.coords.longitude,'_blank');
+      },()=>{ toast('定位失敗，請開啟定位權限'); });
+    };
+
+    // nav helpers
+    const openNav=(q)=>{if(!q)return;window.open('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q),'_blank');};
+    const openAppleNav=(q)=>{if(!q)return;window.open('https://maps.apple.com/?q='+encodeURIComponent(q),'_blank');};
+    const openUrl=(u)=>{if(u)window.open(u,'_blank');};
+
+    // type helpers
+    const dotColor=(t)=>({spot:'#c9a227',food:'#9b2226',hotel:'#1f3a5f',transport:'#3a7ca5',shop:'#6d4c7d'}[t]||'#c9a227');
+    const typeThumb=(t)=>({spot:'📷',food:'🍽️',hotel:'🏨',transport:'🚆',shop:'🛍️'}[t]||'📍');
+    const typeLabel=(t)=>({spot:'景點',food:'餐廳',hotel:'住宿',transport:'交通',shop:'購物'}[t]||'景點');
+    const typeTagClass=(t)=>'tag-'+({spot:'spot',food:'food',hotel:'hotel',transport:'trans',shop:'shop'}[t]||'spot');
+    const restIcon=(t)=>{if(/迪士尼/.test(t))return'🏰';if(/義式|米蘭/.test(t))return'🍝';if(/Bouchon|地中海/.test(t))return'🍷';if(/皮埃蒙特|手工麵/.test(t))return'🍤';if(/薩伏依/.test(t))return'🧀';return'🍽️';};
+    const ampm=(t)=>{if(!t)return'';const h=parseInt(t.split(':')[0]);return h<12?'AM':'PM';};
+    const hhmm=(t)=>t||'';
+
+    // spot detail
+    const spotDetail=ref(null);
+    const openSpotDetail=(item)=>{spotDetail.value=item;};
+
+    // phrases modal
+    const showTr=ref(false);
+    const trLang=ref('法文');
+
+    // add/edit
+    const showAdd=ref(false);
+    const editId=ref(null);
+    const form=ref({time:'',name:'',place:'',desc:'',type:'spot',gmap:''});
+    const openAdd=()=>{editId.value=null;form.value={time:'',name:'',place:'',desc:'',type:'spot',gmap:''};showAdd.value=true;};
+    const editItin=(item)=>{editId.value=item.id;form.value={...item};showAdd.value=true;};
+    const saveItin=()=>{
+      if(!form.value.name){toast('請填寫名稱');return;}
+      const list=itin.value[dayIdx.value]||(itin.value[dayIdx.value]=[]);
+      if(editId.value){const i=list.findIndex(x=>x.id===editId.value);if(i>=0)list[i]={...list[i],...form.value};}
+      else{list.push({...form.value,id:Date.now()});}
+      showAdd.value=false;toast(editId.value?'已更新':'已新增');
+    };
+    const deleteItin=(id)=>{
+      const list=itin.value[dayIdx.value];if(!list)return;
+      const i=list.findIndex(x=>x.id===id);if(i>=0){list.splice(i,1);toast('已刪除');}
+    };
+
+    // checklist
+    const checks=ref({});
+    const toggleCheck=(id)=>{checks.value={...checks.value,[id]:!checks.value[id]};};
+    const prepTotal=computed(()=>CHECKLIST.reduce((s,g)=>s+g.items.length,0));
+    const prepDone=computed(()=>Object.values(checks.value).filter(Boolean).length);
+    const prepPct=computed(()=>prepTotal.value?Math.round(prepDone.value/prepTotal.value*100):0);
+
+    // font scale
+    const scaleSteps=[{v:0.9,l:'小'},{v:1,l:'中'},{v:1.12,l:'大'},{v:1.25,l:'特大'}];
+    const currentScale=ref(1);
+    const showScale=ref(false);
+    const setScale=(v)=>{currentScale.value=v;document.documentElement.style.setProperty('--scale',v);try{localStorage.setItem('eu_scale',v);}catch(e){}};
+
+    // toast
+    const toastMsg=ref('');
+    let toastTimer=null;
+    const toast=(m)=>{toastMsg.value=m;clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastMsg.value='',1800);};
+
+    // ─── GEMINI API KEY ───
+    const gemKey=ref(localStorage.getItem('gem_key')||'');
+    const gemKeyInput=ref('');
+    const saveGemKey=()=>{if(!gemKeyInput.value.startsWith('AIza')){toast('Key 格式錯誤');return;}gemKey.value=gemKeyInput.value.trim();localStorage.setItem('gem_key',gemKey.value);gemKeyInput.value='';toast('✅ API Key 已儲存');};
+
+    // ─── CAMERA MENU TRANSLATION ───
+    const cameraOpen=ref(false),photos=ref([]),scanItems=ref([]),selScan=ref({}),scanning=ref(false),scanProg=ref(0);
+    const showCard=ref(false),cardItems=ref([]);
+    const cardTotal=computed(()=>cardItems.value.reduce((s,x)=>s+(x.price||0)*x.qty,0));
+    const addPhotos=(ev)=>{
+      const files=Array.from(ev.target.files);
+      files.forEach((file)=>{
+        const r=new FileReader();
+        r.onload=(e)=>{const mime=file.type&&file.type.startsWith('image/')?file.type:'image/jpeg';photos.value.push({base64:e.target.result.split(',')[1],mime:mime,thumb:e.target.result});};
+        r.readAsDataURL(file);
+      });
+      ev.target.value='';
+    };
+    const compressPhoto=(base64,mime)=>new Promise((resolve)=>{
+      const img=new Image();
+      img.onload=()=>{
+        const MAX=1024;let w=img.width,h=img.height;
+        if(w<=MAX&&h<=MAX){resolve({base64,mime});return;}
+        const scale=Math.min(MAX/w,MAX/h);
+        const canvas=document.createElement('canvas');
+        canvas.width=Math.round(w*scale);canvas.height=Math.round(h*scale);
+        canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+        const out=canvas.toDataURL('image/jpeg',0.85);
+        resolve({base64:out.split(',')[1],mime:'image/jpeg'});
+      };
+      img.src='data:'+mime+';base64,'+base64;
+    });
+    const doScan=async()=>{
+      if(!gemKey.value){toast('請先設定 Gemini API Key');return;}
+      scanning.value=true;scanItems.value=[];selScan.value={};
+      const total=photos.value.length;
+      const PROMPT='你是法國/義大利餐廳菜單翻譯專家。仔細看這張菜單圖片，把所有能看到的菜色全部列出。\n只能回傳純 JSON 陣列，不能有任何 markdown 或說明文字：\n[{"jp":"原文菜名（照原文法文或義大利文）","zh":"繁體中文翻譯","price":數字或null,"note":"15字內說明","kids_ok":true或false}]\nkids_ok=適合4-7歲小孩。price只填數字不含貨幣符號。每道菜都要列出，不可遺漏。';
+      let all=[];
+      for(let qi=0;qi<total;qi++){
+        scanProg.value=qi+1;
+        const photo=photos.value[qi];
+        try{
+          const compressed=await compressPhoto(photo.base64,photo.mime);
+          const resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+gemKey.value,{
+            method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({contents:[{parts:[{text:PROMPT},{inline_data:{mime_type:compressed.mime,data:compressed.base64}}]}],generationConfig:{temperature:0.1,maxOutputTokens:65536,thinkingConfig:{thinkingBudget:0}}})
+          });
+          const d=await resp.json();
+          if(d.error)throw new Error(d.error.message);
+          let txt='';
+          if(d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts){
+            for(let p=0;p<d.candidates[0].content.parts.length;p++){if(d.candidates[0].content.parts[p].text)txt+=d.candidates[0].content.parts[p].text;}
+          }
+          if(!txt)throw new Error('回傳為空');
+          const clean=txt.replace(/```json|```/gi,'').trim();
+          let items=[];
+          const arrStart=clean.indexOf('['),objStart=clean.indexOf('{');
+          if(arrStart>=0&&(objStart<0||arrStart<objStart)){const arrEnd=clean.lastIndexOf(']');if(arrEnd>arrStart)items=JSON.parse(clean.slice(arrStart,arrEnd+1));}
+          else if(objStart>=0){const objEnd=clean.lastIndexOf('}');if(objEnd>objStart){const parsed=JSON.parse(clean.slice(objStart,objEnd+1));items=parsed.items||parsed.menu||parsed.dishes||[];}}
+          if(!Array.isArray(items)||!items.length)throw new Error('菜單內容為空');
+          all=all.concat(items);
+        }catch(e){toast('第'+(qi+1)+'張分析失敗：'+e.message.slice(0,40));}
+      }
+      const seen={};
+      all=all.filter((x)=>{if(!x.jp||seen[x.jp])return false;seen[x.jp]=1;return true;});
+      scanItems.value=all;scanning.value=false;
+      if(!all.length)toast('未能識別菜單，請確認圖片清晰');else toast('✅ 識別完成！共'+all.length+'道菜');
+    };
+    const openScanShowcard=()=>{
+      const items=scanItems.value.filter((_,i)=>!!selScan.value[i]).map((x)=>({jp:x.jp,zh:x.zh,price:x.price||0,qty:1}));
+      if(!items.length){toast('請先勾選菜色');return;}
+      cardItems.value=items;showCard.value=true;
+    };
+    const manJp=ref(''),manPrice=ref(''),manResult=ref(null);
+    const doManTranslate=async()=>{
+      if(!manJp.value.trim())return;
+      if(!gemKey.value){toast('請先設定 Gemini API Key');return;}
+      try{
+        const resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+gemKey.value,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({systemInstruction:{parts:[{text:'Translate French or Italian dish name to Traditional Chinese. Respond ONLY with JSON: {"jp":"original","zh":"traditional chinese","note":"desc under 15 chars","kids_ok":true/false}'}]},contents:[{parts:[{text:manJp.value}]}],generationConfig:{temperature:.1,maxOutputTokens:200,responseMimeType:'application/json'}})});
+        const d=await resp.json();
+        const txt=(d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts&&d.candidates[0].content.parts[0])?d.candidates[0].content.parts[0].text:'';
+        const clean=txt.replace(/```json|```/gi,'').trim();
+        manResult.value=JSON.parse(clean.slice(clean.indexOf('{'),clean.lastIndexOf('}')+1));
+        if(manPrice.value){cardItems.value.push({jp:manJp.value,zh:manResult.value.zh,price:parseFloat(manPrice.value)||0,qty:1});toast('✅ 已加入點餐單');}
+      }catch(e){manResult.value={jp:manJp.value,zh:'翻譯失敗：'+e.message,note:'',kids_ok:false};}
+    };
+
+    // ─── SHOPPING ───
+    const shopList=ref(JSON.parse(localStorage.getItem('eu_shopList')||'[]'));
+    const shopFilter=ref('all');
+    const shopFilters=[{v:'all',l:'全部'},{v:'未購',l:'⬜ 未購'},{v:'已購',l:'✅ 已購'},{v:'精品',l:'👜 精品'},{v:'食品',l:'🍫 食品'},{v:'酒類',l:'🍷 酒類'},{v:'香水保養',l:'💐 香水保養'},{v:'伴手禮',l:'🎁 伴手禮'}];
+    const catIcons={精品:'👜',食品:'🍫',酒類:'🍷',香水保養:'💐',服飾:'👗',伴手禮:'🎁',其他:'📦'};
+    const catIcon=(c)=>catIcons[c]||'📦';
+    const newShop=ref({name:'',qty:1,cat:'精品',budget:0});
+    const saveShop=()=>{localStorage.setItem('eu_shopList',JSON.stringify(shopList.value));};
+    const filteredShop=computed(()=>{
+      if(shopFilter.value==='all')return shopList.value;
+      if(shopFilter.value==='未購')return shopList.value.filter((x)=>!x.bought);
+      if(shopFilter.value==='已購')return shopList.value.filter((x)=>x.bought);
+      return shopList.value.filter((x)=>x.cat===shopFilter.value);
+    });
+    const addShop=(doQ)=>{
+      if(!newShop.value.name.trim()){toast('請輸入商品名稱');return;}
+      const item={id:Date.now(),name:newShop.value.name.trim(),qty:parseInt(newShop.value.qty)||1,cat:newShop.value.cat,budget:parseFloat(newShop.value.budget)||0,bought:false,pd:null,querying:false};
+      shopList.value.push(item);saveShop();
+      newShop.value={name:'',qty:1,cat:'精品',budget:0};
+      toast('✅ '+item.name+' 已加入');
+      if(doQ)queryItemPrice(item.id);
+    };
+    const hotAdd=(name,cat)=>{if(shopList.value.find((x)=>x.name===name)){toast(name+' 已在清單');return;}shopList.value.push({id:Date.now(),name,qty:1,cat,budget:0,bought:false,pd:null,querying:false});saveShop();toast('✅ '+name+' 已加入');};
+    const boughtCount=computed(()=>shopList.value.filter((x)=>x.bought).length);
+    const totalTwd=computed(()=>Math.round(shopList.value.reduce((s,x)=>{const p=(x.pd&&x.pd.price)||x.budget||0;return s+p*x.qty;},0)*eurTwd.value));
+    const queryItemPrice=async(id)=>{
+      if(!gemKey.value){toast('請先設定 Gemini API Key（右上角 📸）');return;}
+      const item=shopList.value.find((x)=>x.id===id);if(!item)return;
+      item.querying=true;item.pd=null;saveShop();
+      const prompt='You are a France/Italy shopping expert. Respond ONLY with JSON: {"price":number in EUR,"where":"cheapest store or area","note":"remark under 20 chars in Traditional Chinese"}. Product: '+item.name;
+      try{
+        const resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+gemKey.value,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({systemInstruction:{parts:[{text:'You are a France/Italy shopping expert. Respond ONLY with valid JSON, no markdown.'}]},contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:.1,maxOutputTokens:300,responseMimeType:'application/json'}})});
+        const d=await resp.json();
+        if(d.error)throw new Error(d.error.message);
+        const txt=(d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts&&d.candidates[0].content.parts[0])?d.candidates[0].content.parts[0].text:'';
+        const clean=txt.replace(/```json|```/gi,'').trim();
+        const parsed=JSON.parse(clean.slice(clean.indexOf('{'),clean.lastIndexOf('}')+1));
+        parsed.price=parseFloat(parsed.price)||0;
+        item.pd=parsed;if(!item.budget&&parsed.price)item.budget=parsed.price;
+      }catch(e){item.pd={price:0,where:'查詢失敗',note:e.message.slice(0,40)};}
+      item.querying=false;saveShop();
+    };
+    const queryAllPrices=async()=>{
+      if(!gemKey.value){toast('請先設定 Gemini API Key（右上角 📸）');return;}
+      const todo=shopList.value.filter((x)=>!x.pd&&!x.bought);
+      if(!todo.length){toast('所有商品已有價格');return;}
+      toast('🤖 開始查詢 '+todo.length+' 項…');
+      for(const item of todo){await queryItemPrice(item.id);await new Promise((r)=>setTimeout(r,700));}
+      toast('✅ 查詢完成');
+    };
+    const hotlist=[['馬卡龍','食品'],['Praline玫瑰餅','食品'],['鵝肝醬','食品'],['松露製品','食品'],['橄欖油','食品'],['紅酒','酒類'],['香檳','酒類'],['法國香水','香水保養'],['歐舒丹','香水保養'],['名牌包','精品'],['絲巾','精品'],['義大利皮件','精品'],['帕馬森起司','食品'],['咖啡豆','食品'],['巧克力','食品']];
+
+    // ─── RATE & CONVERTER ───
+    const rateInput=ref(String(eurTwd.value));
+    const applyRate=()=>{const v=parseFloat(rateInput.value);if(!v||v<=0){toast('請輸入有效匯率');return;}eurTwd.value=v;toast('✅ 匯率已更新 €1=NT$'+v.toFixed(2));};
+    const convDir=ref('e2t'),convInput=ref(''),convResult=ref(''),convSub=ref('');
+    const doConvert=()=>{
+      const n=parseFloat(convInput.value);
+      if(!n&&n!==0){convResult.value='';return;}
+      if(convDir.value==='e2t'){convResult.value='NT$'+Math.round(n*eurTwd.value).toLocaleString();convSub.value='€'+n+' × '+eurTwd.value.toFixed(2);}
+      else{convResult.value='€'+(n/eurTwd.value).toFixed(2);convSub.value='NT$'+n+' ÷ '+eurTwd.value.toFixed(2);}
+    };
+    watch(convDir,()=>doConvert());
+    watch(eurTwd,()=>{rateInput.value=String(eurTwd.value);doConvert();});
+
+    onMounted(()=>{
+      try{const s=localStorage.getItem('eu_scale');if(s)setScale(parseFloat(s));}catch(e){}
+      try{const c=localStorage.getItem('eu_checks');if(c)checks.value=JSON.parse(c);}catch(e){}
+      try{const r=localStorage.getItem('eu_rate');if(r)eurTwd.value=parseFloat(r);}catch(e){}
+      applyFallback();   // 先填入8月氣候參考，畫面立即有資料
+      loadAllWx();       // 再嘗試抓即時預報（範圍內的日期會更新）
+    });
+    watch(checks,(v)=>{try{localStorage.setItem('eu_checks',JSON.stringify(v));}catch(e){}},{deep:true});
+    watch(eurTwd,(v)=>{try{localStorage.setItem('eu_rate',v);}catch(e){}});
+
+    return {tab,dayIdx,mapDay,meta,days,trains,hotels,frPhrases,itPhrases,checklist,
+      curDay,curItems,rests,restOpen,restFilter,restFilters,filteredRests,toggleRest,
+      wxIdx,selWx,wxDesc,wxAdvice,packingTips,
+      eurTwd,mapSpots,gmapEmbed,showOnMap,openDayRoute,openMyLocation,
+      openNav,openAppleNav,openUrl,dotColor,typeThumb,typeLabel,typeTagClass,restIcon,ampm,hhmm,
+      spotDetail,openSpotDetail,showTr,trLang,
+      showAdd,editId,form,openAdd,editItin,saveItin,deleteItin,
+      checks,toggleCheck,prepTotal,prepDone,prepPct,
+      gemKey,gemKeyInput,saveGemKey,
+      cameraOpen,photos,scanItems,selScan,scanning,scanProg,addPhotos,doScan,openScanShowcard,
+      manJp,manPrice,manResult,doManTranslate,showCard,cardItems,cardTotal,
+      shopList,shopFilter,shopFilters,catIcon,newShop,saveShop,filteredShop,addShop,hotAdd,boughtCount,totalTwd,queryItemPrice,queryAllPrices,hotlist,
+      rateInput,applyRate,convDir,convInput,convResult,convSub,doConvert,
+      scaleSteps,currentScale,showScale,setScale,toastMsg};
+  }
+});
+app.mount('#app');
+</script>
+</body>
+</html>
