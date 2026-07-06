@@ -281,6 +281,7 @@ body{padding-bottom:calc(64px + var(--safe-b))}
         </div>
         <div style="font-size:.62rem;color:var(--muted);margin-top:8px;text-align:center">設定自動儲存</div>
       </div>
+      <button class="hdr-btn" @click="ghOpen=true" title="GitHub 雲端同步">☁️</button>
       <button class="hdr-btn" @click="tab='prep'" title="行前準備">📋</button>
       <button class="hdr-btn" @click="cameraOpen=true" title="拍照翻譯菜單">📸</button>
       <button class="hdr-btn" @click="showTr=true" title="常用會話">🌐</button>
@@ -445,6 +446,11 @@ body{padding-bottom:calc(64px + var(--safe-b))}
     </div>
     <iframe id="gmap-frame" :src="gmapEmbed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen style="position:relative;z-index:1;background:transparent"></iframe>
   </div>
+  <div v-if="mapFocus" style="padding:8px 14px;background:#fffbeb;border-bottom:1px solid #fde68a;font-size:.7rem;color:#92400e;display:flex;justify-content:space-between;align-items:center">
+    <span>🔎 單點預覽中</span>
+    <button @click="mapFocus=''" style="background:var(--teal);color:#fff;border:none;border-radius:8px;padding:5px 11px;font-size:.7rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">🔁 顯示當日全部地點</button>
+  </div>
+  <div v-else style="padding:6px 14px;background:#f0f9ff;border-bottom:1px solid #bae6fd;font-size:.66rem;color:#0369a1">📍 地圖正顯示 Day{{mapDay+1}} 全部 {{mapSpots.length}} 個地點的路線</div>
   <div style="display:flex;gap:8px;padding:10px 14px;background:#fff;border-bottom:1px solid var(--border)">
     <button class="btn btn-teal" style="flex:1;font-size:.75rem;padding:9px" @click="openDayRoute">🗺️ Google 地圖開啟今日路線</button>
     <button class="btn btn-outline" style="font-size:.75rem;padding:9px 12px" @click="openMyLocation">📍 我的位置</button>
@@ -826,6 +832,33 @@ body{padding-bottom:calc(64px + var(--safe-b))}
   </div>
 </div>
 
+<!-- GITHUB SYNC MODAL -->
+<div v-if="ghOpen" class="modal-mask" @click.self="ghOpen=false">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">☁️ GitHub 雲端同步</div>
+    <div style="font-size:.72rem;color:var(--muted);line-height:1.8;margin-bottom:12px;background:#f9f9f8;border-radius:11px;padding:10px 12px">
+      把此網頁檔上傳到 GitHub（可開 GitHub Pages 直接瀏覽），行程編輯、購物與檢查清單會同步到 repo 內的 JSON 檔，跨裝置共用。<br>
+      <b style="color:var(--ink)">設定步驟：</b>① GitHub 建立私人 repo ② Settings → Developer settings → <b>Fine-grained tokens</b> → 產生 Token，該 repo 的 Contents 權限選 <b>Read and write</b> ③ 填入下方欄位。
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <input class="inp" type="password" v-model="ghCfg.token" placeholder="GitHub Token（github_pat_ 開頭）">
+      <input class="inp" v-model="ghCfg.repo" placeholder="使用者/儲存庫 例：wayne/trip-data">
+      <div style="display:flex;gap:8px">
+        <input class="inp" v-model="ghCfg.path" placeholder="檔名 trip-data.json" style="flex:1.5">
+        <input class="inp" v-model="ghCfg.branch" placeholder="分支 main" style="flex:1">
+      </div>
+      <button class="btn btn-outline btn-full" @click="saveGhCfg">💾 儲存設定</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-teal btn-full" @click="ghUpload">⬆️ 上傳到 GitHub</button>
+        <button class="btn btn-teal btn-full" style="background:var(--teal-l)" @click="ghDownload(false)">⬇️ 從 GitHub 載入</button>
+      </div>
+      <div v-if="ghStatus" style="font-size:.74rem;color:var(--teal-d);text-align:center;padding:2px">{{ghStatus}}</div>
+      <div style="font-size:.62rem;color:var(--muted);line-height:1.7">💡 Token 僅儲存在此裝置瀏覽器，不會外傳給第三方。App 開啟時會自動載入雲端最新資料；<b>編輯行程／購物後記得按「上傳」</b>。多裝置使用時先「載入」再編輯可避免互相覆蓋。</div>
+    </div>
+  </div>
+</div>
+
 <!-- CAMERA TRANSLATION MODAL -->
 <div v-if="cameraOpen" class="cam-modal-overlay" @click.self="cameraOpen=false">
   <div class="cam-modal">
@@ -985,49 +1018,49 @@ const DEFAULT_ITIN = {
     {id:10,time:'07:55',name:'抵達 CDG T1',place:'巴黎戴高樂機場 第一航廈',duration:'',desc:'家庭通道通關，提4件大行李',note:'CDGVAL接駁至T2',type:'transport',gmap:'Paris Charles de Gaulle Airport Terminal 1'},
     {id:11,time:'09:57',name:'TGV 12512 ➝ Chessy',place:'CDG T2 TGV站',duration:'12分',desc:'1st Class Coach 11，12分鐘直達迪士尼',note:'已訂票',type:'transport',gmap:'Marne-la-Vallee Chessy station'},
     {id:12,time:'10:15',name:'Disneyland Hôtel 寄存行李',place:'Disneyland Hotel Paris',duration:'',desc:'15:00正式入住，先輕裝入園',note:'退房11:00',type:'hotel',gmap:'Disneyland Hotel Paris',official:'https://www.disneylandparis.com'},
-    {id:13,time:'10:30',name:'Frozen Ever After 冰雪奇緣',nameJp:'World of Frozen',place:'Disney Adventure World',duration:'',desc:'新園最熱門，第一個衝，剛開園排約20-30分',note:'✅兩人均可',type:'spot',gmap:'Disney Adventure World Paris',guide:'2026年新開幕的冰雪奇緣園區，創紀錄人潮。Frozen Ever After 是園區招牌設施，乘船穿越艾倫戴爾王國，重現《冰雪奇緣》經典場景與歌曲。中午前排隊可達60-120分鐘，務必趁剛開園人潮未滿時第一個搭乘。'},
-    {id:14,time:'11:10',name:'Ratatouille 鼠來寶',place:'Disney Adventure World',duration:'',desc:'新園第二熱門，4D追逐設施',note:'Chez Rémy 旁邊',type:'spot',gmap:'Ratatouille ride Disneyland Paris'},
+    {id:13,time:'10:30',name:'Frozen Ever After 冰雪奇緣',nameJp:'World of Frozen',place:'Disney Adventure World',duration:'',desc:'新園最熱門，第一個衝，剛開園排約20-30分',note:'✅兩人均可',type:'spot',gmap:'Disney Adventure World Paris',guide:'2026年全新開幕的冰雪奇緣園區 World of Frozen 重現艾倫戴爾王國全貌：北山、冰雪女王城堡、村莊廣場與湖畔景致一應俱全，是巴黎迪士尼三十年來最大規模擴建。招牌設施 Frozen Ever After 乘船緩緩駛入艾倫戴爾，沿途遇見雪寶、安娜、克斯托夫與馴鹿小斯，最後在艾莎的冰宮聽她高唱 Let It Go，聲光雪景環繞，結尾的小俯衝增添驚喜，適合全家共乘。園區細節極為講究：湖面隨音樂變換光影，建築屋頂覆著白雪，連垃圾桶都是挪威風格，處處是拍照點。此設施是全新園區的人氣王，開園即人潮湧入，中午排隊常突破九十分鐘，務必一早入園第一個衝，搭完再回頭慢慢拍照逛街。附近的艾倫戴爾主題餐廳與紀念品店也值得一逛，孩子親眼見到艾莎與安娜本人保證興奮尖叫，是這趟迪士尼行程的最大亮點。'},
+    {id:14,time:'11:10',name:'Ratatouille 鼠來寶',place:'Disney Adventure World',duration:'',desc:'新園第二熱門，4D追逐設施',note:'Chez Rémy 旁邊',type:'spot',gmap:'Ratatouille ride Disneyland Paris',guide:'以皮克斯電影料理鼠王為主題的4D軌道車，乘客彷彿縮小成老鼠尺寸，跟著小米在古斯多餐廳的廚房地板與天花板間狂奔逃竄，巨型食材與廚具營造出以假亂真的視角錯覺，搭配氣味、熱風與水霧特效身歷其境，無身高限制全家可搭，是新園最受歡迎的闔家設施之一，就在 Chez Rémy 餐廳旁邊，飯前飯後順路搭乘最方便。'},
     {id:15,time:'11:45',name:'午餐：Bistrot Chez Rémy',place:'Disney Adventure World',duration:'1.5小時',desc:'全迪士尼評價最高，鼠來寶主題沉浸式餐廳',note:'點餐前告知生日慶祝(€25蛋糕)',type:'food',gmap:'Bistrot Chez Remy Disneyland Paris',score:'已訂 11:45',booked:true},
-    {id:16,time:'13:15',name:'Spider-Man W.E.B.',place:'Disney Adventure World',duration:'',desc:'射擊互動，家庭友善',note:'餐後熱身',type:'spot',gmap:'Spider-Man WEB Adventure Disneyland Paris'},
-    {id:17,time:'13:45',name:'Crush\u0027s Coaster',place:'Disney Adventure World',duration:'',desc:'海龜主題雲霄飛車',note:'✅兩人均可(107cm)',type:'spot',gmap:'Crush Coaster Disneyland Paris'},
-    {id:18,time:'14:20',name:'Avengers Flight Force ⇄',place:'Disney Adventure World',duration:'',desc:'高速雲霄飛車',note:'Rider Switch · 需120cm，5歲不能搭',type:'spot',gmap:'Avengers Assemble Flight Force Disneyland Paris'},
-    {id:19,time:'15:00',name:'Tower of Terror ⇄',place:'Disney Adventure World',duration:'',desc:'自由落體',note:'Rider Switch · 極刺激可跳過',type:'spot',gmap:'Tower of Terror Disneyland Paris'},
-    {id:20,time:'15:40',name:'Together: A Pixar Musical',place:'Disney Adventure World',duration:'30分',desc:'新園室內音樂劇，有冷氣坐著休息',note:'場次15:40',type:'spot',gmap:'Disney Adventure World Paris'},
+    {id:16,time:'13:15',name:'Spider-Man W.E.B.',place:'Disney Adventure World',duration:'',desc:'射擊互動，家庭友善',note:'餐後熱身',type:'spot',gmap:'Spider-Man WEB Adventure Disneyland Paris',guide:'W.E.B. Adventure 互動射擊設施，戴上蛛網發射器與蜘蛛人並肩作戰，對著螢幕揮手即可射出虛擬蜘蛛絲捕捉失控的機器蜘蛛，體感偵測精準有趣，全車比分數增添對戰樂趣，無身高限制、室內冷氣舒適，排隊區還能參觀漫威研發實驗室場景，是漫威園區中最適合小小孩的設施，父子對決誰是最強蜘蛛人吧。'},
+    {id:17,time:'13:45',name:'Crush\u0027s Coaster',place:'Disney Adventure World',duration:'',desc:'海龜主題雲霄飛車',note:'✅兩人均可(107cm)',type:'spot',gmap:'Crush Coaster Disneyland Paris',guide:'以海底總動員的海龜克拉許為主題的旋轉雲霄飛車，坐進龜殼造型車廂隨東澳洋流旋轉滑行，前段黑暗海底投影夢幻療癒，後段旋轉俯衝刺激度中等，車廂會不規則旋轉是最大特色。身高107公分以上即可搭乘，兩個孩子都達標可全家同樂，是巴黎迪士尼獨有、其他園區沒有的招牌設施，旺季排隊極長，建議善用剛開園或遊行時段前往。'},
+    {id:18,time:'14:20',name:'Avengers Flight Force ⇄',place:'Disney Adventure World',duration:'',desc:'高速雲霄飛車',note:'Rider Switch · 需120cm，5歲不能搭',type:'spot',gmap:'Avengers Assemble Flight Force Disneyland Paris',guide:'復仇者聯盟主題高速雲霄飛車，與鋼鐵人和驚奇隊長並肩升空攔截外星威脅，室內全黑環境中彈射加速與連續翻轉，速度感與失重感強烈，是漫威園區最刺激的設施。需身高120公分以上，7歲哥哥剛好達標可挑戰勇氣，5歲使用 Rider Switch 輪流制，由大人先後搭乘不留遺憾，怕刺激的孩子建議先在出口觀察其他遊客反應再決定。'},
+    {id:19,time:'15:00',name:'Tower of Terror ⇄',place:'Disney Adventure World',duration:'',desc:'自由落體',note:'Rider Switch · 極刺激可跳過',type:'spot',gmap:'Tower of Terror Disneyland Paris',guide:'經典自由落體設施，走進鬧鬼的好萊塢塔飯店，聽完詭異的前導故事後搭上失控電梯，在十三層樓高空反覆急升急墜，失重感強烈，墜落瞬間窗外閃現整個園區景色。氛圍營造是全園最出色的，從排隊區到電梯每個細節都在說故事，身高102公分即可搭乘，但驚嚇度高建議自行評估孩子膽量，Rider Switch 可讓大人輪流體驗不錯過。'},
+    {id:20,time:'15:40',name:'Together: A Pixar Musical',place:'Disney Adventure World',duration:'30分',desc:'新園室內音樂劇，有冷氣坐著休息',note:'場次15:40',type:'spot',gmap:'Disney Adventure World Paris',guide:'2026年新園駐演的百老匯等級音樂劇，三十分鐘串連可可夜總會、天外奇蹟、玩具總動員、腦筋急轉彎等皮克斯經典，真人歌舞、空中特技與大型投影交織，情感豐沛連大人都會感動。劇場冷氣充足座位舒適，是下午避暑休息的最佳選擇，場次固定，建議提前十五分鐘入場選中間偏後的位置視野最佳，孩子看到熟悉角色會跟著唱。'},
     {id:21,time:'16:00',name:'下午茶：Deluxe Lounge',place:'Disneyland Hôtel',duration:'',desc:'飯店專屬貴賓廳，份量大等同輕晚餐',note:'已含 · 16:00-18:00',type:'food',gmap:'Disneyland Hotel Paris',booked:true},
     {id:22,time:'16:45',name:'進房補眠 2.5 小時',place:'Disneyland Hôtel',duration:'',desc:'時差調整關鍵',note:'設兩個鬧鐘，不可省略',type:'hotel',gmap:''},
-    {id:23,time:'19:10',name:'A Million Splashes 大遊行',place:'Disneyland Park',duration:'',desc:'2026現役日間大遊行，彩虹花車',note:'場次19:10',type:'spot',gmap:'Disneyland Park Paris'},
+    {id:23,time:'19:10',name:'A Million Splashes 大遊行',place:'Disneyland Park',duration:'',desc:'2026現役日間大遊行，彩虹花車',note:'場次19:10',type:'spot',gmap:'Disneyland Park Paris',guide:'2026年現役日間大遊行，以色彩潑灑為主題，七彩花車載著米奇米妮、白雪公主、彭彭丁滿、動物方城市茱蒂與魔法滿屋的米拉貝兒沿主街遊行，音樂是迪士尼與皮克斯金曲串燒。行進至睡美人城堡前會停留約十五分鐘進行城堡秀，空中舞者與歌舞輪番登場，城堡正前方是最佳觀賞位置，建議提前二十分鐘卡位。小訣竅：遊行時熱門設施的隊伍會明顯縮短，看過一次後也可反向利用遊行時段去補搭設施。'},
     {id:24,time:'20:00',name:'晚餐：園區快餐',place:'',duration:'',desc:'輕食解決',note:'',type:'food',gmap:''},
-    {id:25,time:'22:40',name:'Disney Tales of Magic 煙火',place:'Disneyland Park',duration:'',desc:'飯店陽台觀賞，看完走2分鐘回房',note:'飯店獨家優勢',type:'spot',gmap:''},
+    {id:25,time:'22:40',name:'Disney Tales of Magic 煙火',place:'Disneyland Park',duration:'',desc:'飯店陽台觀賞，看完走2分鐘回房',note:'飯店獨家優勢',type:'spot',gmap:'',guide:'Disney Tales of Magic 是每晚壓軸的煙火燈光秀，以睡美人城堡為畫布，結合投影、雷射、噴泉與煙火，串連小美人魚、獅子王、冰雪奇緣等經典故事約二十分鐘，配樂磅礡是一天的完美句點。入住 Disneyland Hôtel 的最大特權就是能從房間陽台或飯店觀景廊欣賞，看完走兩分鐘就回房，完全避開數萬人散場的推擠，孩子看完直接洗澡就寢，體力安排上極為關鍵。'},
   ],
   2:[
     {id:30,time:'07:00',name:'早餐：Deluxe Lounge',place:'Disneyland Hôtel',duration:'',desc:'07:00開門就吃，吃飽撐到午餐',note:'已含 · 07:00-11:00',type:'food',gmap:'',booked:true},
-    {id:31,time:'08:30',name:'EMT⭐ Peter Pan\u0027s Flight',place:'Disneyland Park',duration:'',desc:'EMT第一衝，白天排60-90分現在幾乎免排',note:'✅無限制',type:'spot',gmap:'Peter Pan Flight Disneyland Paris',guide:'巴黎迪士尼最會排隊的設施之一，白天動輒排60-90分鐘。住飯店享 Extra Magic Time（EMT），08:30 一般遊客入場前就能搭，幾乎免排。這是住園區飯店最大的優勢，務必第一個衝。'},
-    {id:32,time:'08:50',name:'EMT⭐ Big Thunder Mountain',place:'Disneyland Park',duration:'',desc:'公認全球最佳版本，有水下隧道',note:'✅兩人達102cm',type:'spot',gmap:'Big Thunder Mountain Disneyland Paris'},
-    {id:33,time:'09:10',name:'EMT⭐ Hyperspace Mountain ⇄',place:'Disneyland Park',duration:'',desc:'最刺激室內雲霄飛車',note:'Rider Switch · 7歲125cm達標',type:'spot',gmap:'Hyperspace Mountain Disneyland Paris'},
-    {id:34,time:'09:40',name:'Buzz Lightyear',place:'Disneyland Park',duration:'',desc:'家族射擊對戰',note:'✅無限制',type:'spot',gmap:'Buzz Lightyear Laser Blast Disneyland Paris'},
-    {id:35,time:'10:10',name:'Autopia 賽車',place:'Disneyland Park',duration:'',desc:'孩子可自己開車',note:'✅無限制',type:'spot',gmap:'Autopia Disneyland Paris'},
-    {id:36,time:'10:40',name:'Mickey\u0027s PhilharMagic',place:'Disneyland Park',duration:'',desc:'室內4D動畫，有冷氣坐著',note:'場次多',type:'spot',gmap:'Disneyland Park Paris'},
+    {id:31,time:'08:30',name:'EMT⭐ Peter Pan\u0027s Flight',place:'Disneyland Park',duration:'',desc:'EMT第一衝，白天排60-90分現在幾乎免排',note:'✅無限制',type:'spot',gmap:'Peter Pan Flight Disneyland Paris',guide:'1992年開園至今的元老設施，乘著海盜船從倫敦兒童房的窗戶飛出，越過點點燈火的倫敦城縮景直奔夢幻島，腳下的迷你倫敦如童話繪本般精緻，是彼得潘迷心中的永恆經典。因為乘載量小，它是全園最會排隊的設施之一，白天動輒六十到九十分鐘，住飯店專屬的 EMT 提早入園時段幾乎免排，務必列為早晨第一站，搭完再依序掃蕩幻想世界其他設施。'},
+    {id:32,time:'08:50',name:'EMT⭐ Big Thunder Mountain',place:'Disneyland Park',duration:'',desc:'公認全球最佳版本，有水下隧道',note:'✅兩人達102cm',type:'spot',gmap:'Big Thunder Mountain Disneyland Paris',guide:'巨雷山礦車是公認全球五座迪士尼樂園中最出色的版本，因為整座礦山建在湖中央的小島上，礦車出發後會兩度穿越湖底隧道，在黑暗中加速俯衝的體感獨一無二，其他園區都體驗不到。沿途礦坑爆破、蝙蝠洞、山羊與恐龍骨架等場景細節豐富，速度刺激但不翻轉，是闔家同樂的完美平衡。身高102公分以上即可搭乘，兩個孩子都達標，EMT 時段人少可連搭兩次。'},
+    {id:33,time:'09:10',name:'EMT⭐ Hyperspace Mountain ⇄',place:'Disneyland Park',duration:'',desc:'最刺激室內雲霄飛車',note:'Rider Switch · 7歲125cm達標',type:'spot',gmap:'Hyperspace Mountain Disneyland Paris',guide:'太空山的星際大戰版本 Hyperspace Mountain，室內全黑環境中彈射起步，穿梭於 X 翼戰機與鈦戰機交火的星際戰場，翻轉與急轉彎不斷，配上約翰威廉斯的原力配樂熱血沸騰，是全園最刺激的雲霄飛車。需身高120公分，7歲哥哥可挑戰人生第一次翻轉飛車，5歲以 Rider Switch 輪流制處理，爸媽都能搭到，出口處的照片別忘了看表情。'},
+    {id:34,time:'09:40',name:'Buzz Lightyear',place:'Disneyland Park',duration:'',desc:'家族射擊對戰',note:'✅無限制',type:'spot',gmap:'Buzz Lightyear Laser Blast Disneyland Paris',guide:'巴斯光年雷射槍戰，登上星際巡邏車與札克大王的機器人大軍對戰，手持雷射槍射擊目標得分，車輛可360度旋轉方便瞄準各處靶心，結束後每人顯示各自分數，全家比賽誰是銀河神射手氣氛超嗨。無身高限制、室內冷氣充足，命中隱藏高分靶還能瞬間翻盤，是安排在刺激設施之間喘口氣的最佳選擇，孩子通常會要求再玩一次。'},
+    {id:35,time:'10:10',name:'Autopia 賽車',place:'Disneyland Park',duration:'',desc:'孩子可自己開車',note:'✅無限制',type:'spot',gmap:'Autopia Disneyland Paris',guide:'未來世界風格的賽車道，孩子坐上敞篷小車自己握方向盤踩油門，車輛沿中央軌道行駛不會偏離車道，就算亂轉方向盤也安全無虞，對第一次自己開車的孩子來說成就感十足。大人陪坐副駕即可，速度緩和適合五歲與七歲兄弟各開一台比賽，排隊區的復古未來主義海報與造景也充滿五十年代科幻趣味，是小小車迷不能錯過的體驗。'},
+    {id:36,time:'10:40',name:'Mickey\u0027s PhilharMagic',place:'Disneyland Park',duration:'',desc:'室內4D動畫，有冷氣坐著',note:'場次多',type:'spot',gmap:'Disneyland Park Paris',guide:'米奇的4D魔法音樂會，唐老鴨誤闖魔法音樂廳搶了米奇的魔法帽，引發一連串穿越經典動畫的爆笑旅程，銀幕結合香氣、水花與陣風特效，串連小美人魚、獅子王、阿拉丁與花木蘭的經典歌曲，全長約十二分鐘。室內冷氣座位舒適，場次密集幾乎不用排隊，是午後讓長輩孩子同時休息充電的完美選擇，音樂響起大人也會跟著哼。'},
     {id:37,time:'11:30',name:'午餐：Captain Jack\u0027s',place:'Adventureland',duration:'1.5小時',desc:'坐在加勒比海盜設施內用餐，克里奧爾料理',note:'吃完13:00趕13:30獅子王',type:'food',gmap:'Captain Jacks Disneyland Paris',score:'已訂 11:30',booked:true},
-    {id:38,time:'13:30',name:'Lion King: Rhythms 劇場',place:'Frontierland Theatre',duration:'30分',desc:'大型室內劇場秀，13:30場',note:'建議買保障座位',type:'spot',gmap:'Frontierland Theatre Disneyland Paris'},
+    {id:38,time:'13:30',name:'Lion King: Rhythms 劇場',place:'Frontierland Theatre',duration:'30分',desc:'大型室內劇場秀，13:30場',note:'建議買保障座位',type:'spot',gmap:'Frontierland Theatre Disneyland Paris',guide:'獅子王節奏劇場是巴黎迪士尼最高規格的駐演舞台秀，三十分鐘濃縮獅子王故事精華，真人歌手、非洲鼓樂、飛人特技與火舞輪番上陣，開場的 Circle of Life 由真人歌者站上高台演唱，魄力媲美百老匯與倫敦西區。Frontierland Theatre 為室內劇場冷氣充足，一次可容納千人但熱門場次仍會滿座，建議提早二十分鐘入場，或在 App 加購保障座位確保視野，13:30場看完剛好銜接下午取行李的動線。'},
     {id:39,time:'14:15',name:'午餐：Bistrot Chez Rémy → 取行李',place:'Adventureland',duration:'',desc:'獅子王看完後午餐，再取行李',note:'',type:'food',gmap:''},
     {id:40,time:'15:45',name:'行李房取4件大行李',place:'Disneyland Hôtel',duration:'',desc:'準備離場',note:'',type:'transport',gmap:''},
     {id:41,time:'16:05',name:'RER A ➝ Auber',place:'Marne-la-Vallée Chessy',duration:'43分',desc:'每人€2.55，轉地鐵8號線',note:'⚠️注意班次調整警告',type:'transport',gmap:'Auber RER station Paris'},
     {id:42,time:'17:08',name:'抵達 2 Rue Duvivier',place:'2 Rue Duvivier, 75007 Paris',duration:'',desc:'放行李、洗澡換衣',note:'第7區鐵塔步行圈',type:'hotel',gmap:'2 Rue Duvivier 75007 Paris'},
     {id:43,time:'18:30',name:'晚餐：Chez Pippo',place:'31 Av. de la Bourdonnais',duration:'',desc:'義式家庭餐廳，披薩手工麵孩子愛',note:'步行6分 · 備選 Bici Trattoria',type:'food',gmap:'Chez Pippo Paris',score:'⭐4.6'},
-    {id:44,time:'20:30',name:'戰神廣場草坪佔位',place:'Champ de Mars',duration:'',desc:'鐵塔正對面，帶野餐墊',note:'',type:'spot',gmap:'Champ de Mars Paris'},
-    {id:45,time:'22:00',name:'鐵塔整點閃爍點燈秀',place:'Champ de Mars',duration:'',desc:'草坪欣賞，持續5分鐘',note:'孩子第一次看保證驚呼',type:'spot',gmap:'Eiffel Tower Paris'},
+    {id:44,time:'20:30',name:'戰神廣場草坪佔位',place:'Champ de Mars',duration:'',desc:'鐵塔正對面，帶野餐墊',note:'',type:'spot',gmap:'Champ de Mars Paris',guide:'戰神廣場是艾菲爾鐵塔正前方的大草坪，從鐵塔腳下一路綿延至軍事學校，十八世紀曾是閱兵場，如今是巴黎人野餐與看鐵塔的首選地。傍晚鋪上野餐墊佔個好位置，孩子在草地上奔跑追逐，大人躺著仰望鐵塔逐漸亮燈，等待整點的閃爍燈光秀。此處視角正對鐵塔全景無遮蔽，是拍攝全家福的黃金位置，入夜後人多留意隨身物品。'},
+    {id:45,time:'22:00',name:'鐵塔整點閃爍點燈秀',place:'Champ de Mars',duration:'',desc:'草坪欣賞，持續5分鐘',note:'孩子第一次看保證驚呼',type:'spot',gmap:'Eiffel Tower Paris',guide:'艾菲爾鐵塔每晚日落後亮起金黃色泛光，整點時分兩萬顆水晶燈泡同時閃爍五分鐘，如香檳氣泡般璀璨奪目，是巴黎最浪漫的時刻，這套閃燈系統自2000年跨年啟用至今已成城市儀式。八月日落較晚約21:00，22:00整點場是全家觀賞的最佳時段，在戰神廣場草坪席地而坐視野最佳，孩子第一次看到整座鐵塔閃爍保證發出驚呼，記得先上洗手間、帶件薄外套與野餐墊，看完步行十五分鐘即回住宿。'},
   ],
   3:[
     {id:50,time:'08:00',name:'早餐：Rue Cler 市場街',place:'Rue Cler, 75007',duration:'',desc:'可頌、歐蕾咖啡，巴黎最美食物街',note:'首選 Pâtisserie de la Tour Eiffel(對街)',type:'food',gmap:'Rue Cler Paris',score:'⭐4.7'},
-    {id:51,time:'09:15',name:'巴黎聖母院 Notre-Dame',place:'Île de la Cité',duration:'1小時',desc:'2026修復後重新開放，玫瑰窗、管風琴、新祭壇',note:'免費 · 需當天搶預約QR',type:'spot',gmap:'Notre-Dame de Paris',todo:true,official:'https://www.notredamedeparis.fr',guide:'歷經2019年大火，巴黎聖母院於2024年底重新開放。修復後內部更加明亮潔淨，著名的玫瑰花窗、大管風琴與全新祭壇令人讚嘆。免費入場，但旺季需在官方App搶當日預約QR Code，否則排隊2-3小時。'},
+    {id:51,time:'09:15',name:'巴黎聖母院 Notre-Dame',place:'Île de la Cité',duration:'1小時',desc:'2026修復後重新開放，玫瑰窗、管風琴、新祭壇',note:'免費 · 需當天搶預約QR',type:'spot',gmap:'Notre-Dame de Paris',todo:true,official:'https://www.notredamedeparis.fr',guide:'巴黎聖母院始建於1163年，歷經近兩百年完工，是哥德式建築的巔峰之作，飛扶壁、尖拱與玫瑰窗定義了整個時代的美學，雨果的小說鐘樓怪人更讓它舉世聞名。2019年大火燒毀塔尖與屋頂震驚全球，經過五年、逾八億歐元與兩千名工匠的修復，於2024年底重新開放，石材徹底清洗後內部前所未有地明亮潔白，彷彿回到中世紀落成之初的模樣。必看三寶：南北兩面直徑十三公尺的玫瑰花窗、八千根音管的大管風琴（火災中奇蹟倖存），以及全新設計的現代祭壇。重新開放後採預約制，免費入場但旺季務必提前在官方App搶當日時段QR Code，否則現場排隊二到三小時起跳。參觀約需四十五分鐘至一小時，內部莊嚴請提醒孩子輕聲，可以帶他們找一找立面上被稱為奇美拉的怪獸雕像，這些石獸已在此守望巴黎八百年。廣場前的原點紀念銅牌是全法國道路里程的起算點，全家踩一腳沾好運再離開。'},
     {id:52,time:'10:30',name:'Saint-Louis 島冰淇淋',place:'Île Saint-Louis',duration:'',desc:'Berthillon週二公休，找島上其他冰淇淋店',note:'',type:'food',gmap:'Ile Saint-Louis Paris'},
-    {id:53,time:'11:00',name:'聖徒禮拜堂 Sainte-Chapelle',place:'Île de la Cité',duration:'1小時',desc:'彩繪玻璃窗震撼人心，上午光線最美',note:'成人€22孩子免費 · 需訂票',type:'spot',gmap:'Sainte-Chapelle Paris',todo:true,official:'https://www.sainte-chapelle.fr',guide:'13世紀哥德式建築傑作，由路易九世興建用以存放聖物。上層禮拜堂15公尺高的彩繪玻璃窗環繞四周，1113幅聖經場景在陽光穿透下如萬花筒般絢爛，是巴黎最震撼的室內空間之一。'},
+    {id:53,time:'11:00',name:'聖徒禮拜堂 Sainte-Chapelle',place:'Île de la Cité',duration:'1小時',desc:'彩繪玻璃窗震撼人心，上午光線最美',note:'成人€22孩子免費 · 需訂票',type:'spot',gmap:'Sainte-Chapelle Paris',todo:true,official:'https://www.sainte-chapelle.fr',guide:'聖徒禮拜堂建於1242至1248年，由聖路易國王路易九世下令興建，用來供奉他以天價從君士坦丁堡購回的荊棘冠冕等聖物，短短六年完工卻成為哥德式建築最極致的珍寶，也是巴黎現存最古老的皇家禮拜堂之一。禮拜堂分上下兩層：下層供僕役與士兵使用，藍底金百合的彩繪柱廊已十分精美，但真正的震撼在上層。踏上旋轉樓梯的瞬間，十五面高達十五公尺的彩繪玻璃窗環繞四周，石牆彷彿完全消失，只剩1113幅聖經場景組成的光之聖殿，陽光穿透時整個空間如萬花筒般流轉變幻，被譽為通往天堂的入口，再多照片都無法取代親眼所見。玻璃由下往上、由左至右描繪從創世紀到啟示錄的完整聖經敘事，最後一面是聖路易迎接聖物的場景。上午光線由東側灑入最美，建議選11:00前的時段。成人票22歐元、18歲以下免費，務必提前官網購票選時段，安檢與司法宮共用入口需排隊，參觀約三十至四十五分鐘。'},
     {id:54,time:'12:15',name:'午餐：Saint-Michel 一帶',place:'Saint-Michel',duration:'',desc:'廣場咖啡館或島上小館',note:'',type:'food',gmap:'Place Saint-Michel Paris'},
-    {id:55,time:'13:30',name:'盧森堡公園',place:'Jardin du Luxembourg',duration:'2.5小時',desc:'孩子玩沙池、租小帆船、看木偶戲',note:'大樹蔭，長輩坐椅休息',type:'spot',gmap:'Jardin du Luxembourg',guide:'巴黎左岸最受喜愛的公園，園內八角形水池可租傳統小帆船，孩子用木棍推船遊玩是百年傳統。另有木偶劇場、沙池、旋轉木馬。綠椅遍布大樹蔭下，最適合帶長輩與孩子悠閒消磨午後。'},
-    {id:56,time:'16:00',name:'Bateaux Parisiens 白天遊船',place:'Port de la Bourdonnais',duration:'1小時',desc:'清楚看聖母院、羅浮宮、奧賽博物館',note:'大人€18兒童€9 · 待訂',type:'spot',gmap:'Port de la Bourdonnais Paris',todo:true},
-    {id:57,time:'17:15',name:'傷兵院外觀 Les Invalides',place:'Les Invalides',duration:'',desc:'金色大圓頂拍照，拿破崙長眠地',note:'外觀免費，步行10分',type:'spot',gmap:'Les Invalides Paris'},
+    {id:55,time:'13:30',name:'盧森堡公園',place:'Jardin du Luxembourg',duration:'2.5小時',desc:'孩子玩沙池、租小帆船、看木偶戲',note:'大樹蔭，長輩坐椅休息',type:'spot',gmap:'Jardin du Luxembourg',guide:'盧森堡公園建於1612年，是瑪麗德麥地奇王后思念故鄉佛羅倫斯而建的宮殿花園，盧森堡宮如今是法國參議院所在地，公園則成為巴黎左岸最受喜愛的綠地，也是全巴黎親子設施最完整的公園。最經典的畫面是八角形大水池上的彩色小帆船：花幾歐元租一艘木製帆船，孩子用長棍將船推向池心，看它乘風航行再等它漂回岸邊，這項傳統已延續超過一百年，每艘船掛著不同國家的旗幟，孩子會為自己的船加油吶喊，是最道地的巴黎童年體驗。園內還有大型兒童遊樂場、百年旋轉木馬、木偶劇場與小馬騎乘，大人則可以佔一張著名的綠色鐵椅，這種可自由搬動的椅子是巴黎公園文化的象徵，樹蔭下看書曬太陽便是最道地的巴黎日常。園內散布百餘座雕像，包括自由女神像的縮小原型。八月部分草坪開放野餐，帶著可頌與果汁便能消磨整個下午，是行程中讓孩子放電、長輩放鬆的完美中繼站。'},
+    {id:56,time:'16:00',name:'Bateaux Parisiens 白天遊船',place:'Port de la Bourdonnais',duration:'1小時',desc:'清楚看聖母院、羅浮宮、奧賽博物館',note:'大人€18兒童€9 · 待訂',type:'spot',gmap:'Port de la Bourdonnais Paris',todo:true,guide:'Bateaux Parisiens 塞納河遊船從艾菲爾鐵塔旁的碼頭出發，一小時航程繞行西堤島一圈，沿途飽覽聖母院、羅浮宮、奧賽美術館、亞歷山大三世橋與巴黎古監獄等地標，等於用最省力的方式複習整個巴黎精華。白天搭乘視野清晰最適合認識城市地理，語音導覽含中文頻道，船上座位分露天上層與玻璃艙，夏天建議坐露天層拍照吹風，大人18歐元、兒童9歐元，提前官網訂票可免現場排隊。'},
+    {id:57,time:'17:15',name:'傷兵院外觀 Les Invalides',place:'Les Invalides',duration:'',desc:'金色大圓頂拍照，拿破崙長眠地',note:'外觀免費，步行10分',type:'spot',gmap:'Les Invalides Paris',guide:'傷兵院由路易十四於1670年下令興建，原為安置七千名傷殘老兵的醫院與療養院，如今是軍事博物館與法國軍事榮耀的象徵。金色圓頂教堂是巴黎天際線最耀眼的地標，穹頂貼覆十二公斤金箔，在陽光下熠熠生輝。拿破崙的陵墓安放於圓頂正下方，以六層棺槨層層包覆紅色石英岩棺。外觀與前庭草坪免費參觀，大砲陣列與宏偉立面是拍照熱點，距住宿步行僅十五分鐘，傍晚順路欣賞金頂夕照最美。'},
     {id:58,time:'19:30',name:'晚餐：Bici Trattoria',place:'Rue Saint-Dominique',duration:'',desc:'義大利麵與披薩，鐵塔景觀',note:'步行3分 · 備選 Chez Pippo',type:'food',gmap:'Bici Trattoria Paris',score:'⭐4.5'},
-    {id:59,time:'22:00',name:'艾菲爾鐵塔登頂',place:'Eiffel Tower',duration:'',desc:'電梯直達頂層276公尺，巴黎夜景360度',note:'大人€36兒童€8 · 票最先售完',type:'spot',gmap:'Eiffel Tower Paris',todo:true,official:'https://www.toureiffel.paris',guide:'夏季鐵塔開放至午夜，最後入場23:30。登頂276公尺可360度俯瞰巴黎夜景，22:00與23:00整點的全塔閃爍燈光秀從塔上往外看城市，視角獨特。頂層設香檳吧，可點一杯紀念。登頂票旺季最先售完，務必提前訂。'},
+    {id:59,time:'22:00',name:'艾菲爾鐵塔登頂',place:'Eiffel Tower',duration:'',desc:'電梯直達頂層276公尺，巴黎夜景360度',note:'大人€36兒童€8 · 票最先售完',type:'spot',gmap:'Eiffel Tower Paris',todo:true,official:'https://www.toureiffel.paris',guide:'艾菲爾鐵塔為1889年世界博覽會而建，高324公尺，保持世界最高建築紀錄長達四十一年，起初被巴黎文人聯名痛批為醜陋的鐵怪物，如今卻成為法國的永恆象徵，每年吸引近七百萬人造訪。登頂行程搭乘兩段電梯：先搭斜行電梯到二樓，再換乘直達電梯登上276公尺的頂層觀景台，整個巴黎在腳下鋪展，凱旋門放射狀十二條大道、蒙馬特聖心堂、塞納河蜿蜒與遠方的拉德芳斯新區盡收眼底。頂層還重現了艾菲爾先生的辦公室蠟像場景，以及一座小巧的香檳吧，在巴黎之巔舉杯是一生難忘的儀式感。夏季開放至午夜、最後入場23:30，22:00登頂正好從塔上體驗整點閃爍：兩萬顆燈泡在腳下與身旁同時閃爍，與地面仰望是完全不同的震撼，23:00還能再看一場才下塔。登頂票是全鐵塔最搶手的票種，旺季提前六十天開賣常即刻售罄，務必第一時間官網搶票，大人36歐元、4至11歲8歐元。安檢嚴格建議提前十五分鐘抵達，頂層風大早晚涼，記得幫孩子帶薄外套。'},
   ],
   4:[
     {id:70,time:'09:00',name:'巴黎公寓退房',place:'2 Rue Duvivier',duration:'',desc:'前往 Gare de Lyon',note:'',type:'transport',gmap:'Paris Gare de Lyon'},
@@ -1035,27 +1068,27 @@ const DEFAULT_ITIN = {
     {id:72,time:'12:56',name:'抵達 Lyon Part-Dieu',place:'Lyon Part-Dieu',duration:'',desc:'站內 Relay H 買里昂城市卡',note:'出示TGV票享10%折',type:'transport',gmap:'Lyon Part-Dieu station'},
     {id:73,time:'13:00',name:'午餐：Les Halles Paul Bocuse',place:'102 Cours Lafayette',duration:'1.5小時',desc:'2026全球第三佳市場，現開生蠔、Praline玫瑰塔',note:'里昂美食入門 · 備選 DS Café',type:'food',gmap:'Les Halles Paul Bocuse Lyon',score:'⭐4.5'},
     {id:74,time:'15:00',name:'入住 Pullman Lyon',place:'Lyon Part-Dieu 旁',duration:'',desc:'下車步行3分鐘',note:'',type:'hotel',gmap:'Pullman Lyon Part-Dieu'},
-    {id:75,time:'16:15',name:'沃土廣場 Place des Terreaux',place:'Place des Terreaux',duration:'',desc:'市政廳、巴特迪噴泉、美術館外觀',note:'',type:'spot',gmap:'Place des Terreaux Lyon',guide:'里昂市中心最具代表性的廣場，巴洛克市政廳與精緻的巴特迪噴泉（由打造紐約自由女神的雕塑家設計）相映成趣。地面69座噴泉燈光夜間點亮，廣場旁就是里昂美術館。'},
-    {id:76,time:'17:00',name:'索恩河畔 → Bellecour 廣場',place:'Place Bellecour',duration:'',desc:'傍晚散步，里昂最大廣場',note:'',type:'spot',gmap:'Place Bellecour Lyon'},
+    {id:75,time:'16:15',name:'沃土廣場 Place des Terreaux',place:'Place des Terreaux',duration:'',desc:'市政廳、巴特迪噴泉、美術館外觀',note:'',type:'spot',gmap:'Place des Terreaux Lyon',guide:'沃土廣場是里昂的市政核心，一側是十七世紀的巴洛克式市政廳，另一側是館藏豐富的里昂美術館，被稱為小羅浮宮。廣場中央的巴特迪噴泉出自打造紐約自由女神像的雕塑家巴特迪之手，四匹躍動的駿馬象徵奔流入海的四條大河，鑄鐵雕塑氣勢磅礡，最初其實是為波爾多打造，因價格談不攏才輾轉來到里昂。地面嵌有六十九座小噴泉，夏日傍晚亮燈後孩子最愛在水柱間穿梭嬉戲。廣場自古便是城市集會中心，也是每年十二月里昂燈光節的主舞台。'},
+    {id:76,time:'17:00',name:'索恩河畔 → Bellecour 廣場',place:'Place Bellecour',duration:'',desc:'傍晚散步，里昂最大廣場',note:'',type:'spot',gmap:'Place Bellecour Lyon',guide:'白萊果廣場是歐洲最大的行人專用廣場之一，紅土鋪面遼闊無邊，中央矗立路易十四騎馬銅像，從廣場可直接遠眺富維耶山頂的聖母院，是里昂最具代表性的視覺畫面。廣場是里昂人約會集合的首選地標，四周連接主要購物街與索恩河岸。別忘了帶孩子到廣場西南角找聖修伯里與小王子的雕像，這位小王子的作者1900年就出生在里昂，雕像上作家身旁站著他筆下的小王子，是書迷必訪的合影點。'},
     {id:77,time:'19:30',name:'晚餐：Brasserie Le Sud - Bocuse',place:'11 Place Antonin Poncet',duration:'',desc:'Bocuse旗下地中海小酒館，親子友善',note:'Bellecour旁 · 待訂',type:'food',gmap:'Brasserie Le Sud Bocuse Lyon',score:'待訂 19:30',todo:true,official:'https://www.maisons-bocuse.com'},
   ],
   5:[
-    {id:90,time:'09:15',name:'里昂主教座堂',place:'Vieux Lyon',duration:'',desc:'羅馬式與哥德式混搭，14世紀天文鐘',note:'老城必看',type:'spot',gmap:'Cathedrale Saint-Jean Lyon'},
-    {id:91,time:'10:00',name:'Traboules 隱密通道',place:'Vieux Lyon',duration:'',desc:'穿梭文藝復興建築間的陰涼古道',note:'找「P」標誌公開入口',type:'spot',gmap:'Traboules Vieux Lyon',guide:'里昂老城獨有的「穿廊」，是穿越建築與中庭的秘密通道，過去絲綢工人用來運送布料避雨。共40多條公開通道，找門口標有「P」符號的入口即可免費進入，穿梭其間彷彿走入中世紀。保持安靜，這些仍是住宅。'},
+    {id:90,time:'09:15',name:'里昂主教座堂',place:'Vieux Lyon',duration:'',desc:'羅馬式與哥德式混搭，14世紀天文鐘',note:'老城必看',type:'spot',gmap:'Cathedrale Saint-Jean Lyon',guide:'聖若翰主教座堂始建於1180年，歷經三百年完工，正立面屬火焰哥德式、內部保留羅馬式結構，完整見證老城八百年的建築演變，歷史上教宗若望二十二世在此加冕、亨利四世在此迎娶瑪麗德麥地奇。內部必看十四世紀的天文鐘，高九公尺，是歐洲現存最古老的天文鐘之一，每日定時報時，機械人偶輪番出場演示天使報喜的場景，孩子看到活動人偶會目不轉睛。教堂立面下排的三百多個石雕獎章描繪聖經故事與中世紀日常生活，免費入場，是老城探索的最佳起點。'},
+    {id:91,time:'10:00',name:'Traboules 隱密通道',place:'Vieux Lyon',duration:'',desc:'穿梭文藝復興建築間的陰涼古道',note:'找「P」標誌公開入口',type:'spot',gmap:'Traboules Vieux Lyon',guide:'Traboules 穿廊是里昂獨有的城市秘道，這些穿越建築中庭與樓梯間的隱密通道最早可追溯至四世紀，居民為了快速往返索恩河取水，在密集的建築之間開闢捷徑，法文動詞 trabouler 意為穿樓而過。文藝復興時期老城因絲綢貿易繁榮，義大利商人蓋起粉彩色調的豪宅，穿廊串連起玫瑰色塔樓、迴旋石梯與哥德式拱廊，宛如立體迷宮。十九世紀絲綢工人用它們在雨天運送珍貴綢緞免受淋濕，二戰時期更成為抵抗運動躲避蓋世太保追捕的秘密網絡，拯救無數性命，是刻進里昂靈魂的歷史空間。全城四百多條穿廊中約四十條對外開放，門口貼有獅頭或字母標誌即可自由推門進入，最著名的長穿廊從聖讓街27號一路貫通至三號街，途中的粉紅塔樓中庭是明信片經典畫面。探索過程像尋寶遊戲，孩子推開每扇厚重木門都是驚喜，但請記得這些通道至今仍是民宅公共空間，保持安靜輕聲通過。免費參觀，觀光局可索取穿廊地圖，上午人少、光線斜射進中庭時最有穿越中世紀的氛圍。'},
     {id:93,time:'11:00',name:'午餐：L\u0027Auberge des Canuts',place:'Vieux Lyon',duration:'1小時',desc:'正統里昂Bouchon，出菜快兒童友善',note:'提早吃，避免下午太趕 · 備選 Fiston',type:'food',gmap:'Auberge des Canuts Lyon',score:'⭐4.5'},
-    {id:94,time:'12:30',name:'纜車上富維耶山 + 富維耶聖母院',place:'Fourvière',duration:'',desc:'纜車上山，里昂制高點，金色馬賽克內部',note:'長輩免爬階梯',type:'spot',gmap:'Basilique Notre-Dame de Fourviere Lyon',guide:'矗立於富維耶山頂的19世紀新拜占庭式聖殿，俯瞰整個里昂。內部金色馬賽克與彩繪極盡華麗，被暱稱為「倒置的大象」。搭地下纜車上山，長輩孩子全程不必爬階梯，山頂平台是眺望里昂紅瓦屋頂與阿爾卑斯山的最佳地點。'},
-    {id:95,time:'13:30',name:'富維耶古羅馬劇場',place:'Fourvière',duration:'',desc:'2000年前露天劇場，俯瞰里昂',note:'緊鄰聖母院，免費',type:'spot',gmap:'Theatre Gallo-Romain Fourviere'},
+    {id:94,time:'12:30',name:'纜車上富維耶山 + 富維耶聖母院',place:'Fourvière',duration:'',desc:'纜車上山，里昂制高點，金色馬賽克內部',note:'長輩免爬階梯',type:'spot',gmap:'Basilique Notre-Dame de Fourviere Lyon',guide:'富維耶聖母院矗立於里昂制高點富維耶山，1872年動工、1884年主體完成，是里昂市民為感謝聖母在1870年普法戰爭中庇佑城市免於戰火而集資興建的還願教堂，至今仍是里昂人的信仰中心。白色石灰岩外觀融合新拜占庭與中世紀風格，四座八角形塔樓如童話城堡，里昂人暱稱它為倒置的大象，四隻象腳朝天。外觀素雅但內部金碧輝煌到令人屏息：整面牆的金色馬賽克描繪聖母生平與法國宗教史詩，藍金交織的穹頂、繽紛彩繪玻璃與大理石雕刻無一處留白，與外觀形成強烈的戲劇性對比，別錯過樓下的地下聖堂，氣氛靜謐同樣精彩。教堂前的觀景平台是眺望里昂的最佳位置，兩河交匯、紅瓦屋頂綿延無際，天氣晴朗時可遠眺阿爾卑斯山甚至白朗峰的雪頂。搭乘1862年啟用的地下齒軌纜車上山僅需兩分鐘，是歐洲最古老的纜車系統之一，持里昂城市卡免費，長輩孩子完全不必爬坡。教堂免費入場，若時間允許可付費參加屋頂導覽登上塔樓。傍晚時分夕陽為全城鍍上金光，是里昂最動人的畫面。'},
+    {id:95,time:'13:30',name:'富維耶古羅馬劇場',place:'Fourvière',duration:'',desc:'2000年前露天劇場，俯瞰里昂',note:'緊鄰聖母院，免費',type:'spot',gmap:'Theatre Gallo-Romain Fourviere',guide:'富維耶古羅馬劇場建於西元前15年奧古斯都大帝時期，是法國現存最古老的羅馬劇場，當時的里昂名為盧格杜努姆，是羅馬帝國高盧行省的首府，兩位羅馬皇帝在此出生。劇場依山而建可容納一萬名觀眾，半圓形石階觀眾席俯瞰整座城市，音響設計精妙至今效果絕佳，每年夏天的富維耶之夜音樂節仍在此舉辦演出，兩千年前的舞台今日依然運轉。孩子可以在千年石階上自由奔跑探索，想像羅馬人穿著托加袍看戲的場景，旁邊還有較小的音樂廳遺跡，免費入場，緊鄰聖母院步行三分鐘即達。'},
     {id:98,time:'14:30',name:'纜車下山 → 步行至 Maison de Guignol',place:'Vieux Lyon',duration:'約30分',desc:'下山回老城，準備看木偶劇',note:'',type:'transport',gmap:'La Maison de Guignol Lyon'},
-    {id:92,time:'15:00',name:'Guignol 木偶劇「La tête dans les étoiles」',place:'Théâtre la Maison de Guignol',duration:'約1小時',desc:'里昂發源的傳統手套木偶戲，太空冒險主題',note:'15:00-16:00場（45分演出+後台參觀）· 建議3歲以上 · 需提前訂票',type:'spot',gmap:'La Maison de Guignol Lyon',official:'https://www.lamaisondeguignol.fr',guide:'木偶劇 Guignol 是18世紀里昂絲綢工人 Laurent Mourguet 創造的傳統手套木偶，是里昂的文化象徵。這場「La tête dans les étoiles（頭頂繁星）」是太空救援冒險故事，Guignol、Gnafron 等經典角色齊聚。演出約45分鐘，結束後還能參觀後台、與木偶師見面，孩子會超興奮。全程法語，但動作誇張生動，孩子看肢體就能懂。'},
-    {id:96,time:'16:30',name:'匯流博物館',place:'Musée des Confluences',duration:'1.5小時',desc:'恐龍、猛獁象、埃及木乃伊，孩子最愛',note:'若孩子已累可改 8/21 上午 · T1電車直達',type:'spot',gmap:'Musee des Confluences Lyon',official:'https://www.museedesconfluences.fr',guide:'坐落於隆河與索恩河交匯處的未來感建築，外型如水晶雲朵。館藏橫跨自然史與人類文明：完整恐龍骨架、猛獁象、埃及木乃伊、世界各地文物。互動展示豐富，是孩子大開眼界的好去處，室內冷氣舒適。今日下午行程較滿，可挑恐龍、木乃伊等重點參觀。'},
+    {id:92,time:'15:00',name:'Guignol 木偶劇「La tête dans les étoiles」',place:'Théâtre la Maison de Guignol',duration:'約1小時',desc:'里昂發源的傳統手套木偶戲，太空冒險主題',note:'15:00-16:00場（45分演出+後台參觀）· 建議3歲以上 · 需提前訂票',type:'spot',gmap:'La Maison de Guignol Lyon',official:'https://www.lamaisondeguignol.fr',guide:'Guignol 木偶是1808年里昂失業絲綢工人 Laurent Mourguet 為謀生創造的手套木偶，他原本擺攤拔牙，用木偶戲吸引客人，沒想到木偶比拔牙更受歡迎。Guignol 以機智幽默的小人物形象針砭時事、為平民發聲，兩百年來成為里昂的城市靈魂，地位如同英國的 Punch 或台灣的布袋戲。La Maison de Guignol 木偶劇院位於老城中心，由熱愛傳統的木偶師團隊經營，堅持全手工木偶與現場真人配音演出。本次觀賞的劇目「La tête dans les étoiles（頭頂繁星）」是太空冒險故事：一艘幽浮突然降落老城，Guignol 與好友 Gnafron、Louison、Thomas 甚至 Mémé Baluchon 奶奶都捲入一場宇宙救援行動，星星與行星彷彿觸手可及。演出約四十五分鐘，全程法語但角色動作誇張、追打逗趣節奏明快，孩子光看肢體語言就能笑開懷。最珍貴的是演出後的後台參觀與木偶師見面時間：孩子能近距離觀察木偶構造、了解百年工藝的操作奧秘，這是其他劇場沒有的體驗。付費入場，十八個月以上即需購票，官方建議三歲以上觀賞，場地對行動不便者友善，記得提前官網預訂8/20的15:00場五個位子。'},
+    {id:96,time:'16:30',name:'匯流博物館',place:'Musée des Confluences',duration:'1.5小時',desc:'恐龍、猛獁象、埃及木乃伊，孩子最愛',note:'若孩子已累可改 8/21 上午 · T1電車直達',type:'spot',gmap:'Musee des Confluences Lyon',official:'https://www.museedesconfluences.fr',guide:'匯流博物館2014年開幕，坐落於隆河與索恩河交匯的半島最尖端，解構主義建築由奧地利藍天組事務所設計，鋼鐵與玻璃構成的水晶雲朵造型充滿科幻感，光是建築本身就值得專程造訪，已成為里昂的新世代地標。館藏定位為自然史與人類文明的對話，常設展從宇宙大爆炸一路講到現代社會：鎮館之寶包括高大完整的長毛猛獁象骨架、張牙舞爪的恐爪龍與美洲乳齒象化石、來自埃及的真品木乃伊與彩繪棺木，以及大洋洲與美洲原住民文物，館藏廣度在歐洲地方博物館中首屈一指。展示手法大量運用互動裝置、情境燈光與影音沉浸，不識字的孩子也能看得目不轉睛，五歲與七歲正值恐龍狂熱期，這裡註定是整趟里昂行程中孩子最興奮的室內景點。館內冷氣強勁是夏日避暑首選，頂樓觀景台可眺望兩河匯流的自然奇景，隆河湍急、索恩河平緩，兩色河水涇渭分明。成人約12歐元、18歲以下免費、持里昂城市卡免費，週一休館，搭T1電車直達門口，建議預留兩小時參觀。'},
     {id:97,time:'19:30',name:'晚餐：Le Café des Fédérations',place:'10 Rue Major Martin',duration:'',desc:'最經典傳統Bouchon，€34套餐8道菜',note:'備選 Bouchon Bât-d\u0027Argent',type:'food',gmap:'Le Cafe des Federations Lyon',score:'⭐4.5'},
   ],
   6:[
-    {id:110,time:'08:30',name:'聖安托萬市集',place:'Quai Saint-Antoine',duration:'',desc:'索恩河畔120+攤販，採購野餐食材',note:'週五06:00-13:30',type:'shop',gmap:'Marche Saint-Antoine Lyon',guide:'里昂最大的河畔露天市集，沿索恩河岸綿延，120多個攤位販售法式烤雞、各式起司、現烤麵包、鮮花蔬果。對岸是老城與富維耶山景，是體驗里昂日常生活的最佳地點。採購食材到河畔野餐最道地。'},
-    {id:111,time:'11:00',name:'Bateaux Lyonnais 遊船',place:'Quai des Célestins',duration:'1小時',desc:'沿索恩河至匯流區，英法雙語導覽',note:'大人€15兒童€9 · 城市卡含',type:'spot',gmap:'Bateaux Lyonnais Lyon'},
+    {id:110,time:'08:30',name:'聖安托萬市集',place:'Quai Saint-Antoine',duration:'',desc:'索恩河畔120+攤販，採購野餐食材',note:'週五06:00-13:30',type:'shop',gmap:'Marche Saint-Antoine Lyon',guide:'聖安托萬市集是里昂最大的河畔露天市集，週二至週日清晨沿索恩河岸綿延數百公尺，120多個攤位販售現烤法式烤雞、數十種起司、剛出爐的麵包可頌、鮮花蔬果與熟食，是里昂人採買日常的廚房。對岸就是老城紅瓦與富維耶山景，邊逛邊看風景極為愜意，採購食材帶到河畔草地野餐是最道地的里昂體驗，記得帶現金小額鈔票，多數攤位可試吃，孩子看整隻旋轉烤雞會看得目不轉睛。'},
+    {id:111,time:'11:00',name:'Bateaux Lyonnais 遊船',place:'Quai des Célestins',duration:'1小時',desc:'沿索恩河至匯流區，英法雙語導覽',note:'大人€15兒童€9 · 城市卡含',type:'spot',gmap:'Bateaux Lyonnais Lyon',guide:'里昂遊船從老城旁的塞勒斯坦碼頭出發，一小時航程沿索恩河南下至兩河匯流處再折返，沿途穿越老城文藝復興建築群、司法宮的二十四根新古典柱廊、富維耶山與聖母院山景，最後遠眺匯流博物館的水晶雲朵建築，從河面欣賞里昂是完全不同的視角。船上有英法雙語導覽，大人15歐元、兒童9歐元，持里昂城市卡免費搭乘但旺季需提前在城市卡App預約場次，建議前一天就先訂好隔天時段。'},
     {id:112,time:'12:15',name:'午餐：河畔野餐',place:'索恩河畔',duration:'',desc:'市集採購的烤雞、起司、麵包就地野餐',note:'備選 Notre Maison⭐4.7',type:'food',gmap:''},
-    {id:113,time:'13:45',name:'Mur des Canuts 絲綢壁畫',place:'Croix-Rousse',duration:'',desc:'全法最大壁畫1200㎡，以假亂真的街景',note:'拍照超好玩',type:'spot',gmap:'Mur des Canuts Lyon',guide:'位於絲綢工人區 Croix-Rousse 的巨型3D壁畫，面積達1200平方公尺，是全法國最大的彩繪牆。畫中重現里昂街景與居民日常，透視效果以假亂真，遊客最愛站在畫前拍出融入街景的趣味照片。多年來壁畫會隨居民「成長」更新。'},
-    {id:114,time:'15:00',name:'金頭公園大放電',place:'Parc de la Tête d\u0027Or',duration:'2.5小時',desc:'免費野生動物園、租船、復古小火車',note:'孩子遊樂場 · 長輩樹蔭休息',type:'spot',gmap:'Parc de la Tete d\u0027Or Lyon',guide:'里昂最大的城市公園，佔地117公頃。免費動物園有長頸鹿、斑馬、紅鶴；大湖可租腳踏船遊湖；還有復古旋轉木馬、小火車與兒童遊樂場。綠地遼闊樹蔭充足，是孩子盡情放電、長輩悠閒休息的完美午後去處。'},
+    {id:113,time:'13:45',name:'Mur des Canuts 絲綢壁畫',place:'Croix-Rousse',duration:'',desc:'全法最大壁畫1200㎡，以假亂真的街景',note:'拍照超好玩',type:'spot',gmap:'Mur des Canuts Lyon',guide:'絲綢工人壁畫牆位於紅十字山區，1987年由 CitéCréation 藝術團隊繪成，面積達1200平方公尺，是全歐洲最大的錯視壁畫，也是里昂這座壁畫之城的代表作，全城有超過一百面主題壁畫，而這面是當之無愧的王者。畫面以絲綢工人聚居的紅十字山街景為主題：階梯蜿蜒而上，兩旁是里昂特有的挑高窗公寓（十九世紀為了容納巨大的雅卡爾織布機而設計），居民在陽台晾衣、街角麵包店飄香、孩子牽狗上學，數十個人物與場景細節栩栩如生，站在對街正確角度拍照，彷彿真能踏上畫中階梯走進去，是全家玩錯視攝影的最佳地點。更有趣的是這面壁畫會成長：創作團隊每隔十年左右更新畫面，畫中人物隨真實時間長大變老，當年嬰兒車裡的寶寶如今已是畫中青年，新舊對照照片就展示在壁畫旁，找找看三個時代的變化。紅十字山正是1831年絲綢工人起義的歷史舞台，這幅壁畫是對他們最溫柔的致敬。免費參觀全天開放，搭地鐵C線至 Hénon 站步行五分鐘，看完往東南步行或搭車可接金頭公園，動線順暢。'},
+    {id:114,time:'15:00',name:'金頭公園大放電',place:'Parc de la Tête d\u0027Or',duration:'2.5小時',desc:'免費野生動物園、租船、復古小火車',note:'孩子遊樂場 · 長輩樹蔭休息',type:'spot',gmap:'Parc de la Tete d\u0027Or Lyon',guide:'金頭公園開園於1857年，佔地117公頃，與紐約中央公園同年誕生，是法國最大的城市公園，名稱源自傳說中埋藏於此的黃金基督頭像，至今無人尋獲更添神秘。公園核心是十六公頃的大湖，可租腳踏船或划艇遊湖，天鵝與野鴨成群相伴，湖心小島綠意盎然。最受孩子歡迎的是完全免費的動物園：長頸鹿、斑馬、狐獴、紅鶴、鱷魚與猴群一應俱全，非洲平原區採無柵欄開放式設計，長頸鹿就在咫尺之間漫步，很難相信這一切不收一毛錢，是全歐洲少見的免費都市動物園。園內還有繞行的小火車、百年旋轉木馬、迷你高爾夫與多座大型遊樂場，玫瑰園收藏三萬株、三百五十種玫瑰是國際級的攝影勝地。巨大的百年梧桐與黎巴嫩雪松提供充足樹蔭，長輩可以在湖畔長椅休息看天鵝，孩子在大草坪奔跑放電，一家老小各得其所。園區極大不可能走完，建議鎖定動物園、大湖遊船與遊樂場三個重點，正門的鍍金大鐵門是最經典的入口與合影點。免費入場全年開放，是里昂行程中最放鬆愜意的半天。'},
     {id:115,time:'20:00',name:'晚餐：Bouchon Bât-d\u0027Argent',place:'23 Rue du Bât d\u0027Argent',duration:'',desc:'里昂最後一餐，10小時慢燉豬，Praline玫瑰塔',note:'備選 Notre Maison',type:'food',gmap:'Bouchon Bat d\u0027Argent Lyon',score:'⭐4.6'},
   ],
   7:[
@@ -1064,38 +1097,38 @@ const DEFAULT_ITIN = {
     {id:132,time:'12:00',name:'午餐：Les Halles Paul Bocuse',place:'102 Cours Lafayette',duration:'',desc:'買Praline塔帶走，趕車前快速',note:'車站步行5分',type:'food',gmap:'Les Halles Paul Bocuse Lyon'},
     {id:133,time:'14:50',name:'TER ➝ Chambéry',place:'Lyon Part-Dieu',duration:'1h26',desc:'自由座，行李放車廂連接處',note:'待購票',type:'transport',gmap:'Lyon Part-Dieu station'},
     {id:134,time:'16:16',name:'抵達香貝里',place:'Chambéry',duration:'',desc:'步行5-8分至 La Maison des Ducs',note:'全平路直推',type:'transport',gmap:'Chambery station'},
-    {id:135,time:'17:00',name:'空手逛老城',place:'Chambéry 老城',duration:'',desc:'Beaufort高山起司、手工巧克力、義式拱廊街',note:'',type:'spot',gmap:'Vieille ville Chambery'},
-    {id:136,time:'18:30',name:'大象噴泉拍全家福',place:'Fontaine des Éléphants',duration:'',desc:'香貝里地標四象噴泉',note:'',type:'spot',gmap:'Fontaine des Elephants Chambery'},
+    {id:135,time:'17:00',name:'空手逛老城',place:'Chambéry 老城',duration:'',desc:'Beaufort高山起司、手工巧克力、義式拱廊街',note:'',type:'spot',gmap:'Vieille ville Chambery',guide:'香貝里老城是薩伏依公國七百年的故都，這個家族後來北接法國、南擁義大利，最終成為統一義大利的王室，小城因此瀰漫濃厚的法義混血風情：粉彩外牆、鑄鐵陽台與神秘的拱廊小巷交織，漫步其中彷彿同時置身法國與杜林街頭。老城以特色小店聞名，別錯過在地的博福特高山起司專賣店（被譽為起司中的王子）與傳承數代的手工巧克力老舖，晚餐前空手閒逛採買最愜意，蜿蜒的老街走到底就是大象噴泉，動線輕鬆適合拖著孩子慢慢晃。'},
+    {id:136,time:'18:30',name:'大象噴泉拍全家福',place:'Fontaine des Éléphants',duration:'',desc:'香貝里地標四象噴泉',note:'',type:'spot',gmap:'Fontaine des Elephants Chambery',guide:'大象噴泉建於1838年，紀念香貝里出身的德博涅將軍在印度累積的功勳與他捐給家鄉的鉅額遺產，四頭真實比例的石象只露出前半身、呈十字形排列，被當地人幽默地暱稱為四個沒屁股，是全法國最有話題性的紀念碑之一。噴泉柱頂端立著將軍雕像，周身刻著他在印度的冒險場景。這裡是香貝里最著名的地標與市民約會集合點，黃昏時分噴泉燈光亮起最適合拍攝全家福，四周環繞著咖啡館與冰淇淋店，看完正好走去晚餐。'},
     {id:137,time:'19:00',name:'晚餐：Le Savoyard',place:'35 Place Monge',duration:'',desc:'薩伏依地區料理，乳酪火鍋 Raclette',note:'⭐4.5 · 備選 Restaurant Amedee',type:'food',gmap:'Restaurant le Savoyard Chambery',score:'⭐4.5'},
   ],
   8:[
-    {id:150,time:'09:15',name:'薩伏依公爵城堡 + 花卉市集',place:'Château des Ducs',duration:'',desc:'公爵城堡拍全家福，週日花卉市集買可頌',note:'',type:'spot',gmap:'Chateau des Ducs de Savoie Chambery',guide:'薩伏依公爵的中世紀城堡，曾是薩伏依王朝權力中心。城堡內的聖禮拜堂藏有著名的「都靈裹屍布」複製品（正本現存杜林）。週日城堡前廣場有花卉市集，可買現烤可頌當早餐，氣氛悠閒。'},
-    {id:151,time:'10:15',name:'勒韋內公園放電',place:'Parc du Verney',duration:'',desc:'兒童遊樂場，長輩坐長椅',note:'',type:'spot',gmap:'Parc du Verney Chambery'},
+    {id:150,time:'09:15',name:'薩伏依公爵城堡 + 花卉市集',place:'Château des Ducs',duration:'',desc:'公爵城堡拍全家福，週日花卉市集買可頌',note:'',type:'spot',gmap:'Chateau des Ducs de Savoie Chambery',guide:'薩伏依公爵城堡自十三世紀起便是薩伏依王朝的權力中心，這個從阿爾卑斯山谷起家的家族後來成為義大利統一後的王室，城堡因此被視為橫跨法義千年王朝的起點，深具歷史份量。城堡的聖禮拜堂曾存放基督教最神秘的聖物都靈裹屍布近一世紀，真品後隨王室遷往杜林大教堂，禮拜堂的火焰哥德式建築與五十三鐘組成的排鐘至今保存完好，每逢週六會有排鐘音樂會響徹老城。城堡如今是省政府所在地，外觀、塔樓與庭院可自由參觀，週日城堡前廣場有花卉市集，買束鮮花配現烤可頌，感受法式小城最悠閒的週日晨光。'},
+    {id:151,time:'10:15',name:'勒韋內公園放電',place:'Parc du Verney',duration:'',desc:'兒童遊樂場，長輩坐長椅',note:'',type:'spot',gmap:'Parc du Verney Chambery',guide:'勒韋內公園是香貝里市中心的百年公園，緊鄰老城與火車站，大片草坪、噴泉與百年梧桐環繞，是當地家庭的週末去處。園內設有完善的兒童遊樂場，滑梯、鞦韆與攀爬架一應俱全，正好讓孩子在搭火車前盡情放電，消耗體力上車就睡。長輩可以在綠蔭下的長椅小憩，座位正對噴泉水景，夏日樹蔭涼爽，距離公寓與車站都在步行十分鐘內，是移動日早晨的完美緩衝行程。'},
     {id:152,time:'12:44',name:'TGV 9247 ➝ Turin',place:'Chambéry',duration:'2h39',desc:'1st Coach 13，穿越Fréjus阿爾卑斯隧道',note:'待購票',type:'transport',gmap:'Chambery station'},
     {id:153,time:'15:23',name:'抵達 Turin Porta Susa',place:'Torino Porta Susa',duration:'',desc:'計程車至飯店',note:'⚠️抵達站Porta Susa',type:'transport',gmap:'Torino Porta Susa station'},
-    {id:154,time:'16:30',name:'Via Roma 巴洛克拱廊街',place:'Via Roma',duration:'',desc:'杜林精華購物大道，拱廊遮陽',note:'全程防曬',type:'spot',gmap:'Via Roma Torino',guide:'杜林最優雅的購物大道，兩側是18公里長的巴洛克拱廊（杜林以拱廊街聞名全義），可全程遮陽避雨。連接城堡廣場與聖卡羅廣場，精品名店與百年咖啡館林立，是感受杜林皇家氣派的最佳散步路線。'},
+    {id:154,time:'16:30',name:'Via Roma 巴洛克拱廊街',place:'Via Roma',duration:'',desc:'杜林精華購物大道，拱廊遮陽',note:'全程防曬',type:'spot',gmap:'Via Roma Torino',guide:'羅馬街是杜林最優雅的購物大道，筆直連接新門車站與城堡廣場，兩側是完整連續的巴洛克拱廊，大理石廊柱與精品櫥窗相映成趣。杜林以拱廊之城聞名全義大利，全城拱廊總長達十八公里，最初是為了讓薩伏依王室成員雨天散步不濕鞋、夏天不曝曬而建，如今正好讓八月的遊客全程涼爽。沿途會經過被譽為杜林客廳的聖卡羅廣場，雙子教堂與艾曼紐菲利貝托騎馬銅像是地標，百年咖啡館林立，走累了隨時可以歇腳來杯道地的杜林熱巧克力。'},
     {id:155,time:'17:30',name:'Caffè Torino · Bicerin + Gelato',place:'Piazza San Carlo',duration:'',desc:'杜林招牌Bicerin巧克力咖啡',note:'',type:'food',gmap:'Caffe Torino Italy',score:'⭐4.4'},
     {id:156,time:'19:30',name:'晚餐：La Taverna Dei Mercanti',place:'Torino 市中心',duration:'',desc:'皮埃蒙特松露蛋黃麵 Tajarin',note:'備選 Osteria Nuova',type:'food',gmap:'La Taverna Dei Mercanti Torino',score:'⭐4.7'},
   ],
   9:[
-    {id:170,time:'10:00',name:'杜林埃及博物館',place:'Museo Egizio',duration:'2.5小時',desc:'全球第二大埃及博物館，僅次開羅',note:'週一不休 · 室內冷氣',type:'spot',gmap:'Museo Egizio Torino',official:'https://www.museoegizio.it',guide:'全球第二大、僅次於開羅的埃及博物館，收藏超過3萬件文物。完整的木乃伊、紙莎草、神廟雕像與整座墓室重現，數量與品質令人驚嘆。孩子看到木乃伊與巨型法老雕像會大開眼界。與多數博物館不同，週一正常開放。'},
+    {id:170,time:'10:00',name:'杜林埃及博物館',place:'Museo Egizio',duration:'2.5小時',desc:'全球第二大埃及博物館，僅次開羅',note:'週一不休 · 室內冷氣',type:'spot',gmap:'Museo Egizio Torino',official:'https://www.museoegizio.it',guide:'杜林埃及博物館創立於1824年，是世界上第一座埃及博物館，比開羅的埃及博物館還早了七十八年，收藏規模至今仍高居世界第二，超過三萬件文物中約四千件常設展出。為何埃及珍寶會齊聚義大利？因為薩伏依王室自十八世紀起大量收購埃及文物，加上義大利考古隊二十世紀初在埃及的重大發掘與分成制度，讓杜林成為埃及學重鎮，考古學界流傳一句名言：通往孟菲斯與底比斯的路，必經杜林。鎮館之寶包括保存極度完好的建築師卡與妻子梅麗特之墓整組陪葬品（連麵包與亞麻衣物都完好如初）、拉美西斯二世黑色花崗岩坐像、世界最古老的地形圖莎草紙，以及數十具真品木乃伊與彩繪人形棺。2015年大改裝後展示極具劇場感：法老雕像廳由奧斯卡得主設計燈光，鏡面與光影營造出神殿氛圍，孩子走進其中彷彿瞬間穿越古埃及。互動導覽與動物木乃伊展區是孩子的最愛，親眼看到真正的貓木乃伊與鱷魚木乃伊保證畢生難忘。特別提醒：本館與多數博物館相反，週一正常開放，正好適合8/24週一造訪，成人約18歐元、兒童優惠，官網預約可免排隊，全程室內冷氣是杜林夏日的最佳避暑去處，建議預留兩個半小時。'},
     {id:171,time:'13:15',name:'午餐：Brün 手工麵',place:'Torino',duration:'',desc:'Agnolotti 手工義大利麵',note:'⭐4.7 · 備選 窯烤披薩',type:'food',gmap:'Brun Buona Pasta Fresca Torino',score:'⭐4.7'},
     {id:172,time:'15:30',name:'飯店午睡 1.5 小時',place:'',duration:'',desc:'',note:'',type:'hotel',gmap:''},
-    {id:173,time:'17:00',name:'杜林皇家花園',place:'Giardini Reali',duration:'',desc:'皇家草坪奔跑，林蔭吹風',note:'免費',type:'spot',gmap:'Giardini Reali Torino'},
+    {id:173,time:'17:00',name:'杜林皇家花園',place:'Giardini Reali',duration:'',desc:'皇家草坪奔跑，林蔭吹風',note:'免費',type:'spot',gmap:'Giardini Reali Torino',guide:'杜林皇家花園是薩伏依王宮的後花園，十七世紀由設計凡爾賽宮花園的景觀大師勒諾特親自操刀規劃，幾何對稱的草坪、環形噴泉與林蔭大道盡顯皇家氣派，城牆遺跡與稜堡環繞花園更添歷史感。如今免費開放成為市民最愛的綠洲，孩子可以在昔日王室專屬的草坪上自由奔跑，大人在百年樹蔭下的長椅歇息，傍晚斜陽灑在王宮白色立面上是最美的時刻，從花園可順道欣賞王宮與王家圖書館建築群的外觀。'},
     {id:174,time:'19:30',name:'晚餐：Osteria Nuova',place:'Torino',duration:'',desc:'松露麵、皮埃蒙特菜',note:'⭐4.7',type:'food',gmap:'Osteria Nuova Torino',score:'⭐4.7'},
   ],
   10:[
     {id:190,time:'10:15',name:'計程車至 Porta Nuova',place:'Torino Porta Nuova',duration:'',desc:'終點式月台，全平面無障礙',note:'⚠️非Porta Susa！',type:'transport',gmap:'Torino Porta Nuova station'},
     {id:191,time:'11:10',name:'Italo ➝ Milano Centrale',place:'Torino Porta Nuova',duration:'1h',desc:'Prima Business 商務艙',note:'待購票',type:'transport',gmap:'Torino Porta Nuova station'},
     {id:192,time:'12:10',name:'Smart Hotel 寄存行李',place:'Milano Centrale 旁',duration:'',desc:'',note:'',type:'hotel',gmap:'Smart Hotel Milano Centrale'},
-    {id:193,time:'14:00',name:'布雷拉區 Brera 漫步',place:'Brera',duration:'',desc:'米蘭藝術街區，藝廊與精品店',note:'義式冰淇淋消暑',type:'spot',gmap:'Brera district Milan',guide:'米蘭最具藝術氣息的街區，鵝卵石巷弄間散布著畫廊、古董店、設計小舖與露天咖啡館。布雷拉美術館收藏義大利文藝復興名作。傍晚是當地人的 aperitivo 餐前酒時光，氣氛悠閒迷人，適合悠閒散步配一支道地 gelato。'},
+    {id:193,time:'14:00',name:'布雷拉區 Brera 漫步',place:'Brera',duration:'',desc:'米蘭藝術街區，藝廊與精品店',note:'義式冰淇淋消暑',type:'spot',gmap:'Brera district Milan',guide:'布雷拉區是米蘭最有藝術氣息的街區，鵝卵石巷弄間畫廊、古董店、手工設計小舖與露天咖啡館錯落有致，被稱為米蘭的蒙馬特，卻比蒙馬特更精緻優雅。街區核心是布雷拉美術館，收藏拉斐爾的聖母婚禮、卡拉瓦喬與曼帖那等文藝復興巨作，美術館所在的宮殿中庭與植物園也值得一看。傍晚是布雷拉最迷人的時刻，米蘭人開始餐前酒時光，巷弄間飄著咖啡與現做冰淇淋的香氣，牽著孩子隨意漫步，每個轉角都是風景，記得人手一支道地義式 gelato 邊走邊吃，開心果與榛果口味是米蘭人的最愛。'},
     {id:194,time:'19:30',name:'晚餐：Ristorante Nabucco',place:'Brera',duration:'',desc:'番紅花燉飯 Risotto alla Milanese',note:'備選 Il Cestino(披薩)',type:'food',gmap:'Ristorante Nabucco Brera Milano',score:'⭐4.2'},
   ],
   11:[
-    {id:210,time:'09:45',name:'《最後的晚餐》達文西真跡',place:'Santa Maria delle Grazie',duration:'',desc:'達文西曠世名作，每梯次限15分鐘',note:'⚠️需提前2-3個月搶票',type:'spot',gmap:'Cenacolo Vinciano Milano',todo:true,official:'https://cenacolovinciano.org',guide:'達文西1495-98年繪於感恩聖母教堂食堂牆上的曠世巨作，描繪耶穌宣告門徒中有人將背叛時的瞬間。為保護壁畫，每梯次僅15分鐘、限額入場，是全義大利最難訂的景點，務必提前2-3個月於官網搶票。'},
-    {id:211,time:'11:00',name:'森皮奧內公園',place:'Parco Sempione',duration:'',desc:'米蘭最大市區綠地，孩子放電',note:'免費',type:'spot',gmap:'Parco Sempione Milano'},
+    {id:210,time:'09:45',name:'《最後的晚餐》達文西真跡',place:'Santa Maria delle Grazie',duration:'',desc:'達文西曠世名作，每梯次限15分鐘',note:'⚠️需提前2-3個月搶票',type:'spot',gmap:'Cenacolo Vinciano Milano',todo:true,official:'https://cenacolovinciano.org',guide:'最後的晚餐是達文西1495至1498年受米蘭公爵盧多維科委託，繪於感恩聖母教堂道明會修道院食堂北牆的曠世巨作，寬八點八公尺、高四點六公尺，描繪耶穌說出你們之中有一人要出賣我的瞬間，十二門徒的震驚、疑惑、憤怒與心虛在同一畫面炸開，每個手勢與表情都是心理劇，達文西以精準的一點透視法讓畫中空間彷彿食堂的延伸，當年用餐的修士彷彿與基督同席共餐，是西方藝術史最偉大的敘事畫。可惜達文西不用傳統濕壁畫技法，實驗性地以蛋彩混油彩直接畫在乾燥牆面上，完成不到二十年便開始剝落，五百年來歷經多次修復、拿破崙軍隊把食堂當馬廄、甚至1943年盟軍轟炸（食堂幾乎全毀，唯獨這面牆在沙包保護下奇蹟倖存），最近一次修復耗時二十一年。如今以最嚴格的方式保護：參觀者須先通過除濕氣閘室，每梯次限35人、僅能停留15分鐘，全年門票開賣即秒殺，是全義大利最難預約的景點，務必提前二到三個月在官方通路搶票。帶孩子前可先講解畫中故事，現場考考他們：誰是猶大？找找他手中緊握的錢袋與打翻的鹽罐。'},
+    {id:211,time:'11:00',name:'森皮奧內公園',place:'Parco Sempione',duration:'',desc:'米蘭最大市區綠地，孩子放電',note:'免費',type:'spot',gmap:'Parco Sempione Milano',guide:'森皮奧內公園是米蘭最大的市區綠地，佔地47公頃，1888年在昔日的閱兵場上闢建，位於斯福爾扎城堡正後方，大草坪、蜿蜒湖泊與壯麗的和平門構成開闊景致，和平門是拿破崙時代的凱旋門，與巴黎凱旋門遙相呼應。園內兒童遊樂場設施完善，米蘭人在此野餐、慢跑、遛狗，是市中心難得的呼吸空間，安排在最後的晚餐與大教堂之間，正好讓孩子放電、大人在樹蔭下喘口氣，順道欣賞斯福爾扎城堡的紅磚塔樓外觀。'},
     {id:212,time:'14:00',name:'午餐',place:'大教堂周邊',duration:'',desc:'大教堂周邊 / 艾曼紐迴廊咖啡館',note:'',type:'food',gmap:'Duomo di Milano'},
-    {id:213,time:'15:30',name:'米蘭大教堂 + 艾曼紐迴廊',place:'Duomo di Milano',duration:'',desc:'哥德式大教堂 + 精品玻璃拱廊',note:'精品採購、拱廊遮陽',type:'spot',gmap:'Duomo di Milano',guide:'米蘭地標，歷時近600年建成的白色大理石哥德式教堂，135座尖塔與3400尊雕像繁複壯觀，可登頂俯瞰。旁邊的艾曼紐二世迴廊是世界最古老購物廊之一，玻璃穹頂下名牌精品與百年咖啡館雲集，在公牛馬賽克上轉一圈是當地習俗。'},
+    {id:213,time:'15:30',name:'米蘭大教堂 + 艾曼紐迴廊',place:'Duomo di Milano',duration:'',desc:'哥德式大教堂 + 精品玻璃拱廊',note:'精品採購、拱廊遮陽',type:'spot',gmap:'Duomo di Milano',guide:'米蘭大教堂始建於1386年，歷時近六百年才告完工，連拿破崙都曾下令趕工（他1805年在此加冕義大利國王），是世界最大的哥德式教堂之一，可同時容納四萬人。整座教堂以粉白色坎多利亞大理石打造，石材六百年來由專屬採石場經運河源源不絕運抵，135座尖塔如石林刺向天際，外牆與塔頂共有3400多尊雕像，數量居全球教堂之冠，最高的尖塔上矗立著鍍金聖母瑪利亞像，是米蘭人的精神守護者，傳統上全城建築不得高過她，連摩天大樓頂端都放置聖母像複製品以示尊重。內部52根巨柱如參天石林，彩繪玻璃窗規模是歐洲最大之一，午後陽光穿透時滿堂生輝。體力允許強烈建議購票登頂：漫步在大理石尖塔森林之間俯瞰米蘭市區，天晴時可遠眺阿爾卑斯山，是其他教堂沒有的體驗，有電梯選項適合長輩孩子。教堂旁的艾曼紐二世迴廊建於1867年，是世界最古老的購物拱廊之一，玻璃穹頂與馬賽克地板美輪美奐，Prada 創始店就在其中。記得帶孩子在迴廊地板的公牛馬賽克上，把腳跟踩在公牛身上原地轉三圈，這是米蘭人祈求好運的百年傳統，廣場鴿群環繞，是整趟旅程合影收尾的經典場景。'},
     {id:214,time:'19:30',name:'畢業晚宴',place:'Brera / 大教堂周邊',duration:'',desc:'法義跨國之旅壓軸',note:'Ristorante Nabucco / 精緻餐廳',type:'food',gmap:'Ristorante Nabucco Brera Milano'},
   ],
   12:[
@@ -1278,12 +1311,16 @@ const app = createApp({
     const tab=ref('itinerary');
     const dayIdx=ref(0);
     const mapDay=ref(0);
-    const meta={title:'France & Italy',sub:'法義家族鐵路慢遊 · 8/15-8/27'};
+    const meta={title:'France & Italy',sub:'法義家族鐵路慢遊 · 8/15-8/27 · v3'};
     const days=ref(TRIP_DAYS.map(d=>({...d,wxIcon:'',wx:null})));
     const trains=TRAINS, hotels=HOTELS, frPhrases=FR_PHRASES, itPhrases=IT_PHRASES, checklist=CHECKLIST;
 
     // itinerary state
-    const itin=ref(JSON.parse(JSON.stringify(DEFAULT_ITIN)));
+    const ITIN_VER='v3-1';
+    const _savedItin=localStorage.getItem('eu_itin'), _savedVer=localStorage.getItem('eu_itinVer');
+    const itin=ref((_savedVer===ITIN_VER&&_savedItin)?JSON.parse(_savedItin):JSON.parse(JSON.stringify(DEFAULT_ITIN)));
+    const saveItinLocal=()=>{try{localStorage.setItem('eu_itin',JSON.stringify(itin.value));localStorage.setItem('eu_itinVer',ITIN_VER);}catch(e){}};
+    watch(itin,saveItinLocal,{deep:true});
     const curDay=computed(()=>days.value[dayIdx.value]);
     const curItems=computed(()=>{
       const arr=(itin.value[dayIdx.value]||[]).slice();
@@ -1390,15 +1427,18 @@ const app = createApp({
 
     // map (Google Maps embed)
     const mapSpots=computed(()=>(itin.value[mapDay.value]||[]).filter(i=>i.gmap).slice().sort((a,b)=>(a.time||'').localeCompare(b.time||'')));
-    const mapFocus=ref('');  // current query to center the embed on
+    const mapFocus=ref('');  // 單點預覽用；空值=顯示當日全部地點
     const gmapEmbed=computed(()=>{
-      let q=mapFocus.value;
-      if(!q){
-        const sp=mapSpots.value;
-        if(sp.length) q=sp[0].gmap||sp[0].name;
-        else { const c=CITY_CENTER[mapDay.value]||[48.8566,2.35]; q=c[0]+','+c[1]; }
-      }
-      return 'https://maps.google.com/maps?q='+encodeURIComponent(q)+'&z=14&hl=zh-TW&output=embed';
+      // 單點預覽模式
+      if(mapFocus.value) return 'https://maps.google.com/maps?q='+encodeURIComponent(mapFocus.value)+'&z=15&hl=zh-TW&output=embed';
+      const sp=mapSpots.value;
+      if(!sp.length){ const c=CITY_CENTER[mapDay.value]||[48.8566,2.35]; return 'https://maps.google.com/maps?q='+c[0]+','+c[1]+'&z=13&hl=zh-TW&output=embed'; }
+      const enc=(s)=>encodeURIComponent(s.gmap||s.name);
+      if(sp.length===1) return 'https://maps.google.com/maps?q='+enc(sp[0])+'&z=15&hl=zh-TW&output=embed';
+      // 多點：用路線模式一次顯示當日全部地點（起點→途經→終點）
+      let url='https://maps.google.com/maps?saddr='+enc(sp[0])+'&daddr='+enc(sp[1]);
+      for(let i=2;i<sp.length;i++) url+='+to:'+enc(sp[i]);
+      return url+'&dirflg=r&hl=zh-TW&output=embed';
     });
     // reset focus to the day's first spot whenever the map day changes
     watch(mapDay,()=>{ mapFocus.value=''; });
@@ -1478,6 +1518,52 @@ const app = createApp({
     const toastMsg=ref('');
     let toastTimer=null;
     const toast=(m)=>{toastMsg.value=m;clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastMsg.value='',1800);};
+
+    // ─── GITHUB 雲端同步 ───
+    const ghCfg=ref(JSON.parse(localStorage.getItem('gh_cfg')||'{"token":"","repo":"","path":"trip-data.json","branch":"main"}'));
+    const ghOpen=ref(false);
+    const ghStatus=ref(localStorage.getItem('gh_last')||'');
+    const saveGhCfg=()=>{localStorage.setItem('gh_cfg',JSON.stringify(ghCfg.value));toast('✅ GitHub 設定已儲存');};
+    const b64e=(s)=>btoa(unescape(encodeURIComponent(s)));
+    const b64d=(s)=>decodeURIComponent(escape(atob(String(s).replace(/\n/g,''))));
+    const ghUrl=()=>'https://api.github.com/repos/'+ghCfg.value.repo+'/contents/'+ghCfg.value.path;
+    const ghHeaders=()=>({'Authorization':'Bearer '+ghCfg.value.token,'Accept':'application/vnd.github+json'});
+    const collectData=()=>({ver:3,updated:new Date().toISOString(),itin:itin.value,shopList:shopList.value,checks:checks.value,eurTwd:eurTwd.value});
+    const applyData=(d)=>{
+      if(d.itin)itin.value=d.itin;
+      if(d.shopList)shopList.value=d.shopList;
+      if(d.checks)checks.value=d.checks;
+      if(d.eurTwd)eurTwd.value=d.eurTwd;
+      saveItinLocal();saveShop();
+    };
+    const ghUpload=async()=>{
+      if(!ghCfg.value.token||!ghCfg.value.repo){toast('請先填寫 Token 與 Repo');return;}
+      ghStatus.value='⬆️ 上傳中…';
+      try{
+        let sha=null;
+        const g=await fetch(ghUrl()+'?ref='+ghCfg.value.branch+'&t='+Date.now(),{headers:ghHeaders()});
+        if(g.ok){const j=await g.json();sha=j.sha;}
+        const body={message:'trip sync '+new Date().toISOString(),content:b64e(JSON.stringify(collectData())),branch:ghCfg.value.branch};
+        if(sha)body.sha=sha;
+        const p=await fetch(ghUrl(),{method:'PUT',headers:ghHeaders(),body:JSON.stringify(body)});
+        if(!p.ok){const e=await p.json().catch(()=>({}));throw new Error(e.message||('HTTP '+p.status));}
+        ghStatus.value='✅ 已上傳 '+new Date().toLocaleString();
+        localStorage.setItem('gh_last',ghStatus.value);
+        toast('✅ 已同步到 GitHub');
+      }catch(e){ghStatus.value='❌ 上傳失敗：'+e.message;toast('上傳失敗');}
+    };
+    const ghDownload=async(silent)=>{
+      if(!ghCfg.value.token||!ghCfg.value.repo){if(!silent)toast('請先填寫 Token 與 Repo');return;}
+      if(!silent)ghStatus.value='⬇️ 下載中…';
+      try{
+        const g=await fetch(ghUrl()+'?ref='+ghCfg.value.branch+'&t='+Date.now(),{headers:ghHeaders()});
+        if(!g.ok)throw new Error(g.status===404?'雲端尚無資料，請先上傳一次':'HTTP '+g.status);
+        const j=await g.json();
+        applyData(JSON.parse(b64d(j.content)));
+        ghStatus.value='✅ 已載入雲端資料 '+new Date().toLocaleTimeString();
+        if(!silent)toast('✅ 已從 GitHub 載入');
+      }catch(e){ghStatus.value='❌ '+e.message;if(!silent)toast('下載失敗');}
+    };
 
     // ─── GEMINI API KEY ───
     const gemKey=ref(localStorage.getItem('gem_key')||'');
@@ -1637,6 +1723,7 @@ const app = createApp({
       try{const r=localStorage.getItem('eu_rate');if(r)eurTwd.value=parseFloat(r);}catch(e){}
       applyFallback();   // 先填入8月氣候參考，畫面立即有資料
       loadAllWx();       // 再嘗試抓即時預報（範圍內的日期會更新）
+      if(ghCfg.value.token&&ghCfg.value.repo)ghDownload(true); // 已設定同步→自動載入雲端最新
     });
     watch(checks,(v)=>{try{localStorage.setItem('eu_checks',JSON.stringify(v));}catch(e){}},{deep:true});
     watch(eurTwd,(v)=>{try{localStorage.setItem('eu_rate',v);}catch(e){}});
@@ -1644,7 +1731,8 @@ const app = createApp({
     return {tab,dayIdx,mapDay,meta,days,trains,hotels,frPhrases,itPhrases,checklist,
       curDay,curItems,rests,restOpen,restFilter,restFilters,filteredRests,toggleRest,
       wxIdx,selWx,wxDesc,wxAdvice,packingTips,
-      eurTwd,mapSpots,gmapEmbed,showOnMap,openDayRoute,openMyLocation,
+      eurTwd,mapSpots,gmapEmbed,showOnMap,openDayRoute,openMyLocation,mapFocus,
+      ghCfg,ghOpen,ghStatus,saveGhCfg,ghUpload,ghDownload,
       openNav,openAppleNav,openUrl,dotColor,typeThumb,typeLabel,typeTagClass,restIcon,ampm,hhmm,
       spotDetail,openSpotDetail,showTr,trLang,
       showAdd,editId,form,openAdd,editItin,saveItin,deleteItin,
